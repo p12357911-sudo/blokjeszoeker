@@ -28,7 +28,7 @@
       zoek: 'Zoek', bezig: 'Bezig…',
       nogBezig: function (s) { return 'Nog bezig… ' + s; },
       resultaat: 'Resultaat',
-      resHint: 'Sleep het kader over de foto (of tik ergens). Het vergrootglas laat zien wat erin zit. Met de knoppen zeg je of dat blokje het is; de lijst past zich meteen aan.',
+      resHint: 'Sleep het kader over de foto (of tik ergens). Het vergrootglas laat zien wat erin zit. Zit een gekleurd kader net naast het blokje? Tik erop en versleep het, of trek aan de witte hoekjes. Met de knoppen zeg je of dat blokje het is.',
       alsVoorbeeld: '＋ Gebruik als voorbeeld', geenKandHier: 'Hier ligt geen kandidaat. Staat het goede blokje in het kader? Kies dan “Dit is hem!” of “Gebruik als voorbeeld”.',
       hem: '✓ Dit is hem!', lijkt: '≈ Lijkt erop, niet hem', niet: '✗ Niet deze', zoom: 'Zoom',
       gevonden: 'Gevonden! Veel bouwplezier.',
@@ -44,7 +44,16 @@
       tijdRegel: function (i) { return 'Werkformaat ' + i.werk + ' · ' + i.hoeken + ' richtingen × ' + i.schalen + ' maten = ' + i.combis + ' combinaties · grove ronde ' + i.grof + ' · verfijnen ' + i.fijn + ' (' + i.pieken + ' plekken)'; },
       herTijd: function (ms) { return 'Opnieuw gerangschikt in ' + ms; },
       privTitel: 'Privacy',
-      priv: "Je foto's verlaten je apparaat niet: het zoeken gebeurt helemaal in je browser. Er wordt niets opgestuurd of bewaard. Fotografeer liever geen gezichten.",
+      priv: "Het gewone zoeken gebeurt helemaal in je browser: je foto verlaat je apparaat niet. Alleen als je zelf op “Laat AI meekijken” drukt, gaat een verkleinde foto (of uitsneden) plus je voorbeeld via onze server naar Mistral AI (Frankrijk). Wij bewaren die beelden niet. Fotografeer liever geen gezichten.",
+      aiTitel: '🤖 AI-hulp (optioneel)', aiUitleg: 'Twijfel je? Laat AI (Mistral Large 4) de beste kandidaten controleren en zelf omkaderen. Gratis maar beperkt per dag.',
+      aiWerkwijze: 'AI kijkt naar:', aiFoto: 'hele foto', aiMozaiek: 'uitsneden (top 6)',
+      aiKnop: function (n) { return '🤖 Laat AI meekijken' + (n != null ? ' (nog ' + n + ' vandaag)' : ''); },
+      aiNiet: 'AI-hulp nog niet beschikbaar', aiBezig: '🤖 AI kijkt mee…', aiOp: 'Je AI-checks voor vandaag zijn op. Morgen weer.',
+      aiDruk: 'De AI is nu te druk of gaf een fout. Probeer het zo nog eens.', aiFout: 'AI-hulp lukte niet (geen verbinding).',
+      aiTijd: function (tot, model, m, werk) { return 'AI-check: ' + tot + ' (waarvan model ' + m + ') · ' + model + ' · ' + werk; },
+      aiUitslag: function (b, tw, n, v) { return 'AI-oordeel: ' + b + ' bevestigd, ' + tw + ' twijfel, ' + n + ' nee' + (v ? ', ' + v + ' nieuwe AI-vondst(en) (paars)' : '') + '.'; },
+      aiGeen: 'AI vond geen exacte match in dit beeld.',
+      ai_bevestigd: 'AI: bevestigd', ai_twijfel: 'AI: twijfel', ai_nee: 'AI: nee', aiVondst: 'AI-vondst',
       voet: 'Blokjeszoeker is niet verbonden aan de LEGO Group. LEGO® is een merk van de LEGO Group.'
     },
     en: {
@@ -70,7 +79,7 @@
       zoek: 'Search', bezig: 'Working…',
       nogBezig: function (s) { return 'Working… ' + s; },
       resultaat: 'Result',
-      resHint: 'Drag the box over the photo (or tap anywhere). The magnifier shows what is inside. Use the buttons to say whether that piece is the one; the list updates immediately.',
+      resHint: 'Drag the box over the photo (or tap anywhere). The magnifier shows what is inside. Is a coloured box slightly off the piece? Tap it and drag it, or pull the white corners. Use the buttons to say whether that piece is the one.',
       alsVoorbeeld: '＋ Use as example', geenKandHier: 'There is no candidate here. Is the right piece inside the box? Then choose “This is it!” or “Use as example”.',
       hem: '✓ This is it!', lijkt: '≈ Looks like it, but no', niet: '✗ Not this one', zoom: 'Zoom',
       gevonden: 'Found it! Happy building.',
@@ -86,7 +95,16 @@
       tijdRegel: function (i) { return 'Working size ' + i.werk + ' · ' + i.hoeken + ' directions × ' + i.schalen + ' sizes = ' + i.combis + ' combinations · first pass ' + i.grof + ' · refine ' + i.fijn + ' (' + i.pieken + ' spots)'; },
       herTijd: function (ms) { return 'Re-ranked in ' + ms; },
       privTitel: 'Privacy',
-      priv: 'Your photos never leave your device: the search runs entirely in your browser. Nothing is uploaded or stored. Please avoid photographing faces.',
+      priv: 'The normal search runs entirely in your browser: your photo never leaves your device. Only when you press “Let AI take a look” is a downscaled photo (or crops) plus your example sent via our server to Mistral AI (France). We do not store those images. Please avoid photographing faces.',
+      aiTitel: '🤖 AI help (optional)', aiUitleg: 'Not sure? Let AI (Mistral Large 4) check the best candidates and outline matches itself. Free but limited per day.',
+      aiWerkwijze: 'AI looks at:', aiFoto: 'whole photo', aiMozaiek: 'crops (top 6)',
+      aiKnop: function (n) { return '🤖 Let AI take a look' + (n != null ? ' (' + n + ' left today)' : ''); },
+      aiNiet: 'AI help not available yet', aiBezig: '🤖 AI is looking…', aiOp: 'Your AI checks for today are used up. Back tomorrow.',
+      aiDruk: 'The AI is busy or returned an error. Please try again shortly.', aiFout: 'AI help failed (no connection).',
+      aiTijd: function (tot, model, m, werk) { return 'AI check: ' + tot + ' (model ' + m + ') · ' + model + ' · ' + werk; },
+      aiUitslag: function (b, tw, n, v) { return 'AI verdict: ' + b + ' confirmed, ' + tw + ' unsure, ' + n + ' no' + (v ? ', ' + v + ' new AI find(s) (purple)' : '') + '.'; },
+      aiGeen: 'AI found no exact match in this image.',
+      ai_bevestigd: 'AI: confirmed', ai_twijfel: 'AI: unsure', ai_nee: 'AI: no', aiVondst: 'AI find',
       voet: 'Brick Finder is not affiliated with the LEGO Group. LEGO® is a trademark of the LEGO Group.'
     }
   };
@@ -246,7 +264,7 @@
     $('taalknop').textContent = taal === 'en' ? 'NL' : 'EN';
     $('fotohint').textContent = t(S.modus === 'wijs' ? 'fotoHintWijs' : 'fotoHint'); werkSchattingBij();
     if (S.ref) $('reftekst').textContent = S.ref.bron === 'foto' ? t('refUitFoto') : t('refUitBestand');
-    bouwKeuzes(); tekenLijst(); if (S.tijd) toonTijd();
+    bouwKeuzes(); tekenLijst(); if (S.tijd) toonTijd(); if (S.ai) aiKnopTekst();
   }
 
   // ---------- tekenen ----------
@@ -315,6 +333,11 @@
       ctx.lineWidth = 4 * dpr * px; ctx.strokeStyle = '#fff'; ctx.strokeRect(x - 2 * px, y - 2 * px, w + 4 * px, h + 4 * px);
       ctx.lineWidth = 2.5 * dpr * px; ctx.strokeStyle = kleur; ctx.strokeRect(x - 2 * px, y - 2 * px, w + 4 * px, h + 4 * px);
     });
+    (S.aiBoxen || []).forEach(function (q) {
+      var x = q[1] / 1000 * W, y = q[0] / 1000 * H, w = (q[3] - q[1]) / 1000 * W, h = (q[2] - q[0]) / 1000 * H;
+      ctx.save(); ctx.setLineDash([6 * dpr * px, 4 * dpr * px]); ctx.lineWidth = 3 * dpr * px; ctx.strokeStyle = '#7b1fa2'; ctx.strokeRect(x - 5 * px, y - 5 * px, w + 10 * px, h + 10 * px); ctx.restore();
+      ctx.fillStyle = '#7b1fa2'; ctx.font = 'bold ' + (11 * dpr * px) + 'px Arial'; ctx.textBaseline = 'bottom'; ctx.fillText('AI', x - 5 * px, y - 6 * px);
+    });
     if (S.vizier) {
       var v = S.vizier, vx = v[1] / 1000 * W, vy = v[0] / 1000 * H, vw = (v[3] - v[1]) / 1000 * W, vh = (v[2] - v[0]) / 1000 * H;
       ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.rect(vx, vy, vw, vh); ctx.fill('evenodd');
@@ -323,6 +346,16 @@
       // greepje in het midden: laat zien dat je het kader kunt slepen
       ctx.beginPath(); ctx.arc(vx + vw / 2, vy + vh / 2, 7 * dpr * px, 0, 2 * Math.PI); ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fill();
       ctx.lineWidth = 2 * dpr * px; ctx.strokeStyle = '#003A5C'; ctx.stroke();
+    }
+    // geselecteerde kandidaat: precies kader + hoekgrepen (verslepen = verplaatsen, hoekjes = maat)
+    var g = S.gekozen;
+    if (g && g.status !== 'weg') {
+      var gb = g.det.box, gx = gb[1] / 1000 * W, gy = gb[0] / 1000 * H, gw = (gb[3] - gb[1]) / 1000 * W, gh = (gb[2] - gb[0]) / 1000 * H;
+      ctx.lineWidth = 2 * dpr * px; ctx.strokeStyle = '#fff'; ctx.setLineDash([4 * dpr * px, 3 * dpr * px]); ctx.strokeRect(gx, gy, gw, gh); ctx.setLineDash([]);
+      [[gx, gy], [gx + gw, gy], [gx, gy + gh], [gx + gw, gy + gh]].forEach(function (q) {
+        ctx.beginPath(); ctx.arc(q[0], q[1], 6 * dpr * px, 0, 2 * Math.PI); ctx.fillStyle = '#fff'; ctx.fill();
+        ctx.lineWidth = 2.5 * dpr * px; ctx.strokeStyle = g.status === 'hem' ? '#00c853' : '#e6007e'; ctx.stroke();
+      });
     }
   }
   function tekenLoep() {
@@ -338,6 +371,14 @@
       ctx.lineWidth = 3; ctx.strokeStyle = k.status === 'hem' ? '#00c853' : KLEUREN_KADER[idx];
       ctx.strokeRect((b[1] - v[1]) / (v[3] - v[1]) * c.width - 4, (b[0] - v[0]) / (v[2] - v[0]) * c.height - 4, (b[3] - b[1]) / (v[3] - v[1]) * c.width + 8, (b[2] - b[0]) / (v[2] - v[0]) * c.height + 8);
     });
+    var g = S.gekozen;
+    if (g && g.status !== 'weg') {
+      var gb = g.det.box, X0 = (gb[1] - v[1]) / (v[3] - v[1]) * c.width, Y0 = (gb[0] - v[0]) / (v[2] - v[0]) * c.height, X1 = (gb[3] - v[1]) / (v[3] - v[1]) * c.width, Y1 = (gb[2] - v[0]) / (v[2] - v[0]) * c.height;
+      ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.setLineDash([6, 4]); ctx.strokeRect(X0, Y0, X1 - X0, Y1 - Y0); ctx.setLineDash([]);
+      [[X0, Y0], [X1, Y0], [X0, Y1], [X1, Y1]].forEach(function (q) {
+        ctx.beginPath(); ctx.arc(q[0], q[1], 11, 0, 2 * Math.PI); ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = g.status === 'hem' ? '#00c853' : '#e6007e'; ctx.stroke();
+      });
+    }
     ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(c.width / 2 - 10, c.height / 2); ctx.lineTo(c.width / 2 + 10, c.height / 2);
     ctx.moveTo(c.width / 2, c.height / 2 - 10); ctx.lineTo(c.width / 2, c.height / 2 + 10); ctx.stroke();
@@ -407,39 +448,93 @@
     $('edUit').addEventListener('click', function () { KE.zoomOm(1 / 1.6); });
     $('edReset').addEventListener('click', function () { KE.passend(); });
 
-    // resultaatfoto: kader slepen (muis en aanraken); tik/klik buiten het kader zet het kader daar neer
-    var rf = $('resfoto'), rs = null;
+    // Kandidaatkaders bewerken: in de geselecteerde kandidaat slepen = verplaatsen, hoekjes = groter/kleiner.
+    // Elders slepen = het vergrootglas-kader verschuiven. Tik op een ander kandidaatkader = selecteren.
+    var GREEP_PX = 20;
+    function raak(p, tolY, tolX) {
+      var g = S.gekozen;
+      if (g && g.status !== 'weg') {
+        var b = g.det.box, hoeken = { lb: [b[0], b[1]], rb: [b[0], b[3]], lo: [b[2], b[1]], ro: [b[2], b[3]] }, beste = null, bd = 1;
+        var binnen = p[0] > b[0] && p[0] < b[2] && p[1] > b[1] && p[1] < b[3];
+        // binnen het kader telt een hoek alleen vlak bij die hoek (anders kun je een klein kader niet verplaatsen)
+        if (binnen) { tolY = Math.min(tolY, (b[2] - b[0]) * 0.3); tolX = Math.min(tolX, (b[3] - b[1]) * 0.3); }
+        for (var n in hoeken) { var d = Math.hypot((p[0] - hoeken[n][0]) / tolY, (p[1] - hoeken[n][1]) / tolX); if (d < bd) { bd = d; beste = n; } }
+        if (beste) return { k: g, greep: beste };
+        if (binnen) return { k: g, greep: 'binnen' };
+      }
+      var ander = toonLijst().filter(function (k) { var b = k.det.box; return p[0] > b[0] && p[0] < b[2] && p[1] > b[1] && p[1] < b[3]; })[0];
+      return ander ? { k: ander, greep: 'kies' } : null;
+    }
+    function bewerk(st, p) {
+      var o = st.oud, dy = p[0] - st.p0[0], dx = p[1] - st.p0[1], b;
+      if (st.greep === 'binnen') {
+        dy = klem(dy, -o[0], 1000 - o[2]); dx = klem(dx, -o[1], 1000 - o[3]);
+        b = [o[0] + dy, o[1] + dx, o[2] + dy, o[3] + dx];
+      } else {
+        b = o.slice();
+        if (st.greep[1] === 'b') b[0] = klem(o[0] + dy, 0, 1000); else b[2] = klem(o[2] + dy, 0, 1000);
+        if (st.greep[0] === 'l') b[1] = klem(o[1] + dx, 0, 1000); else b[3] = klem(o[3] + dx, 0, 1000);
+        b = [Math.min(b[0], b[2]), Math.min(b[1], b[3]), Math.max(b[0], b[2]), Math.max(b[1], b[3])];
+        if (b[2] - b[0] < 3 || b[3] - b[1] < 3) return;
+      }
+      st.k.det.box = b; st.k.det.vast = true; st.k.aangepast = true; teken();
+    }
+    function koppelBewerken(el, naarFoto, tolerantie, schuifVizier) {
+      var st = null;
+      el.addEventListener('pointerdown', function (e) {
+        if (!S.bron || !S.vizier) return; e.preventDefault(); el.setPointerCapture(e.pointerId);
+        var p = naarFoto(e), tol = tolerantie(), h = raak(p, tol[0], tol[1]);
+        if (h && h.greep !== 'kies') st = { id: e.pointerId, soort: 'kand', k: h.k, greep: h.greep, p0: p, oud: h.k.det.box.slice() };
+        else st = { id: e.pointerId, soort: 'vizier', kies: h ? h.k : null, x0: e.clientX, y0: e.clientY, bewogen: false, v: schuifVizier.start(e, p) };
+      });
+      el.addEventListener('pointermove', function (e) {
+        if (!st || e.pointerId !== st.id) return;
+        if (st.soort === 'kand') { bewerk(st, naarFoto(e)); return; }
+        if (Math.hypot(e.clientX - st.x0, e.clientY - st.y0) > 5) st.bewogen = true;
+        if (st.bewogen || !st.kies) schuifVizier.beweeg(e, st.v);
+      });
+      function los(e) {
+        if (!st || e.pointerId !== st.id) return;
+        if (st.soort === 'vizier' && st.kies && !st.bewogen) kies(st.kies);
+        if (st.soort === 'kand') tekenLijst();
+        st = null;
+      }
+      el.addEventListener('pointerup', los); el.addEventListener('pointercancel', los);
+    }
+    var rf = $('resfoto');
     function rfPunt(e) { var r = rf.getBoundingClientRect(); return [klem((e.clientY - r.top) / r.height * 1000, 0, 1000), klem((e.clientX - r.left) / r.width * 1000, 0, 1000)]; }
-    rf.addEventListener('pointerdown', function (e) {
-      if (!S.bron || !S.vizier) return; e.preventDefault(); rf.setPointerCapture(e.pointerId);
-      var p = rfPunt(e), v = S.vizier, m = vizierMidden();
-      var binnen = p[0] > v[0] && p[0] < v[2] && p[1] > v[1] && p[1] < v[3];
-      rs = { id: e.pointerId, dy: binnen ? m[0] - p[0] : 0, dx: binnen ? m[1] - p[1] : 0 };
-      zetVizier(p[0] + rs.dy, p[1] + rs.dx);
+    koppelBewerken(rf, rfPunt, function () { var r = rf.getBoundingClientRect(); return [GREEP_PX / r.height * 1000, GREEP_PX / r.width * 1000]; }, {
+      // resultaatfoto: kader pakken en slepen; buiten het kader tikken zet het kader daar neer
+      start: function (e, p) {
+        var v = S.vizier, m = vizierMidden(), binnen = p[0] > v[0] && p[0] < v[2] && p[1] > v[1] && p[1] < v[3];
+        var d = { dy: binnen ? m[0] - p[0] : 0, dx: binnen ? m[1] - p[1] : 0, binnen: binnen, p: p };
+        return d;
+      },
+      beweeg: function (e, d) { var p = rfPunt(e); zetVizier(p[0] + d.dy, p[1] + d.dx); }
     });
-    rf.addEventListener('pointermove', function (e) { if (!rs || e.pointerId !== rs.id) return; var p = rfPunt(e); zetVizier(p[0] + rs.dy, p[1] + rs.dx); });
-    function rfLos(e) { if (rs && e.pointerId === rs.id) rs = null; }
-    rf.addEventListener('pointerup', rfLos); rf.addEventListener('pointercancel', rfLos);
+    // tik buiten het kader (zonder kandidaat) zet het vergrootglas daar neer
+    rf.addEventListener('pointerup', function (e) { if (!S.vizier) return; var p = rfPunt(e), v = S.vizier; if (!(p[0] > v[0] && p[0] < v[2] && p[1] > v[1] && p[1] < v[3]) && !raak(p, 1, 1)) zetVizier(p[0], p[1]); });
     window.addEventListener('resize', function () { tekenResFoto(); });
     $('alsvoorbeeld').addEventListener('click', function () {
       if (!S.vizier || S.bezig) return;
       // middelste derde van het kader als nieuw voorbeeld; daarna kun je het in de foto bijstellen
       var v = S.vizier, hh = (v[2] - v[0]) / 6, hw = (v[3] - v[1]) / 6, m = vizierMidden();
-      var box = [m[0] - hh, m[1] - hw, m[0] + hh, m[1] + hw];
+      var box = [m[0] - hh, m[1] - hw, m[0] + hh, m[1] + hw], g = S.gekozen;
+      // ligt de (eventueel bijgestelde) geselecteerde kandidaat in het vergrootglas? dan precies dat kader gebruiken
+      if (g && g.status !== 'weg') { var gm = [(g.det.box[0] + g.det.box[2]) / 2, (g.det.box[1] + g.det.box[3]) / 2]; if (gm[0] > v[0] && gm[0] < v[2] && gm[1] > v[1] && gm[1] < v[3]) box = g.det.box.slice(); }
       S.ref = { canvas: snij(S.bron, box, 24, 400), zoek: snijMetMarge(S.bron, box), box: box, bron: 'foto' };
       $('refeditorblok').hidden = true; zetHoek(0);
       zetModus('wijs'); KF.centreerOp((box[1] + box[3]) / 2000 * S.bron.width, (box[0] + box[2]) / 2000 * S.bron.height, 4);
       $('fotoblok').scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
-    // slepen in de loep verschuift het vizier
-    var loep = $('loep'), start = null; loep.style.touchAction = 'none';
-    loep.addEventListener('pointerdown', function (e) { if (!S.vizier) return; loep.setPointerCapture(e.pointerId); start = { x: e.clientX, y: e.clientY, m: vizierMidden() }; });
-    loep.addEventListener('pointermove', function (e) {
-      if (!start) return; var r = loep.getBoundingClientRect(), v = S.vizier;
-      zetVizier(start.m[0] - (e.clientY - start.y) / r.height * (v[2] - v[0]), start.m[1] - (e.clientX - start.x) / r.width * (v[3] - v[1]));
+    // loep: zelfde bewerken (kandidaat verplaatsen/maat), elders slepen verschuift het vizier
+    var loep = $('loep'); loep.style.touchAction = 'none';
+    function loepPunt(e) { var r = loep.getBoundingClientRect(), v = S.vizier; return [v[0] + (e.clientY - r.top) / r.height * (v[2] - v[0]), v[1] + (e.clientX - r.left) / r.width * (v[3] - v[1])]; }
+    koppelBewerken(loep, loepPunt, function () { var r = loep.getBoundingClientRect(), v = S.vizier; return [GREEP_PX / r.height * (v[2] - v[0]), GREEP_PX / r.width * (v[3] - v[1])]; }, {
+      start: function (e) { return { x: e.clientX, y: e.clientY, m: vizierMidden(), v: S.vizier.slice() }; },
+      beweeg: function (e, d) { var r = loep.getBoundingClientRect(), v = d.v; zetVizier(d.m[0] - (e.clientY - d.y) / r.height * (v[2] - v[0]), d.m[1] - (e.clientX - d.x) / r.width * (v[3] - v[1])); }
     });
-    loep.addEventListener('pointerup', function () { start = null; }); loep.addEventListener('pointercancel', function () { start = null; });
   }
   function tekenRefSnel() { if (S.ref) { $('refblok').hidden = false; tekenRef(); } }
 
@@ -513,7 +608,7 @@
     if (S.modus === 'wijs') zetModus('kijk');
     var knop = $('zoekknop'); knop.disabled = true; knop.textContent = t('bezig'); S.bezig = true;
     $('resultaat').hidden = true; $('gevonden').hidden = true; $('tijdblok').hidden = true;
-    S.kand = []; S.negatief = []; S.res = null; S.gekozen = null;
+    S.kand = []; S.negatief = []; S.res = null; S.gekozen = null; S.aiBoxen = null; $('aistatus').textContent = '';
     var t0 = performance.now(), deel = 0;
     clearInterval(klok); klok = setInterval(function () { $('voortgang').textContent = t('nogBezig')(sec(performance.now() - t0) + (deel ? ' · ' + Math.round(deel * 100) + '%' : '')); }, 100);
     var opties = {
@@ -540,7 +635,7 @@
     function klaar() {
       clearInterval(klok); $('voortgang').textContent = '';
       knop.disabled = false; knop.textContent = t('zoek'); S.bezig = false;
-      werkSchattingBij(); toonResultaat();
+      werkSchattingBij(); toonResultaat(); aiKnopTekst();
     }
   }
 
@@ -573,7 +668,8 @@
       var dc = snij(S.bron, rondom(k.det.box, 2.2, 0.04), 64, 128); dc.style.width = '64px'; dc.style.height = '64px';
       var d = k.det.det || {};
       var tx = document.createElement('span'); tx.className = 'tekst';
-      tx.textContent = k.handmatig ? t('handmatig') : (k.det.score + '% ' + t('zeker') + ' · ' + t('vorm') + ' ' + Math.round(100 * Math.min(1, k.det.vorm / 0.7)) + '%' + (k.det.kleur != null ? ' · ' + t('kleur') + ' ' + Math.round(100 * k.det.kleur) + '%' : ''));
+      tx.textContent = k.aiVondst ? '' : k.handmatig ? t('handmatig') : (k.det.score + '% ' + t('zeker') + ' · ' + t('vorm') + ' ' + Math.round(100 * Math.min(1, k.det.vorm / 0.7)) + '%' + (k.det.kleur != null ? ' · ' + t('kleur') + ' ' + Math.round(100 * k.det.kleur) + '%' : ''));
+      if (k.ai || k.aiVondst) { var bd = document.createElement('span'); bd.className = 'aibadge ' + (k.aiVondst ? 'vondst' : k.ai); bd.textContent = k.aiVondst ? t('aiVondst') : t('ai_' + k.ai); tx.appendChild(bd); }
       var kn = document.createElement('span'); kn.className = 'knoppies';
       ['hem', 'lijkt', 'niet'].forEach(function (a) {
         var b = document.createElement('button'); b.type = 'button'; b.textContent = t(a);
@@ -594,7 +690,7 @@
     var uit = BZDetect.rangschik(S.res, S.negatief);
     var oud = {}; S.kand.forEach(function (k) { oud[S.res.kand.indexOf(k.det)] = k; });
     var nieuw = uit.kandidaten.map(function (d) { return oud[S.res.kand.indexOf(d)] || { det: d, status: 'open' }; });
-    S.kand.forEach(function (k) { if ((k.status === 'weg' || k.status === 'hem' || k.handmatig) && nieuw.indexOf(k) < 0) nieuw.push(k); });
+    S.kand.forEach(function (k) { if ((k.status === 'weg' || k.status === 'hem' || k.handmatig || k.aiVondst) && nieuw.indexOf(k) < 0) nieuw.push(k); });
     S.kand = nieuw;
     if (S.tijd) S.tijd.her = performance.now() - t0;
   }
@@ -605,6 +701,10 @@
   }
   function feedback(actie, k) {
     if (S.bezig || !S.res) return;
+    if (!k && S.gekozen && S.gekozen.status !== 'weg') {
+      var gv = S.vizier, gb = S.gekozen.det.box, gm = [(gb[0] + gb[2]) / 2, (gb[1] + gb[3]) / 2];
+      if (gm[0] > gv[0] && gm[0] < gv[2] && gm[1] > gv[1] && gm[1] < gv[3]) k = S.gekozen;
+    }
     if (!k) {
       var m = vizierMidden();
       k = zichtbaar().filter(function (x) { var b = x.det.box; return m[0] > b[0] - 15 && m[0] < b[2] + 15 && m[1] > b[1] - 15 && m[1] < b[3] + 15; })[0] || null;
@@ -642,6 +742,105 @@
     $('tijddetail').textContent = regels.join('\n');
     $('tijdblok').hidden = false;
   }
+
+  // ---------- optionele AI-stap (Mistral via onze Worker; alleen op knopdruk) ----------
+  var WORKER = 'https://blokjeszoeker.scheikunde-oefenen.workers.dev';
+  (function () { var q = new URLSearchParams(location.search).get('worker'); if (q && /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(q)) WORKER = q; })();
+  S.ai = { beschikbaar: false, over: null, modus: 'foto', bezig: false };
+  function aiKnopTekst() {
+    var k = $('aiknop');
+    if (S.ai.bezig) { k.textContent = t('aiBezig'); k.disabled = true; return; }
+    if (!S.ai.beschikbaar) { k.textContent = t('aiNiet'); k.disabled = true; return; }
+    k.textContent = t('aiKnop')(S.ai.over); k.disabled = S.ai.over === 0 || !S.res;
+  }
+  function aiStatus() {
+    fetch(WORKER + '/status').then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      S.ai.beschikbaar = !!(j && j.ai); S.ai.over = j ? j.over_vandaag : null; aiKnopTekst();
+    }, function () { S.ai.beschikbaar = false; aiKnopTekst(); });
+  }
+  function jpeg(c, q) { return c.toDataURL('image/jpeg', q || 0.85).split(',')[1]; }
+  function verklein(bron, maxZ) {
+    var s = Math.min(1, maxZ / Math.max(bron.width, bron.height)), c = document.createElement('canvas');
+    c.width = Math.round(bron.width * s); c.height = Math.round(bron.height * s);
+    var x = c.getContext('2d'); x.imageSmoothingQuality = 'high'; x.drawImage(bron, 0, 0, c.width, c.height); return c;
+  }
+  function beschrijvingEn() {
+    var d = [];
+    if (S.kleur) d.push(S.kleur.en);
+    if (S.maat) d.push(S.maat[0] + 'x' + S.maat[1]);
+    d.push(S.soort ? SOORTEN.filter(function (x) { return x.id === S.soort; })[0].en : 'brick');
+    return d.join(' ') + (S.maat ? ' (' + S.maat[0] * S.maat[1] + ' studs)' : '');
+  }
+  // AI-box [xmin,ymin,xmax,ymax] (0-1000 van het verstuurde beeld) -> onze box [y0,x0,y1,x1] (0-1000 van de foto)
+  function oordeel(c, boxen) {
+    var cm = [(c[0] + c[2]) / 2, (c[1] + c[3]) / 2], best = 'nee';
+    boxen.forEach(function (a) {
+      var am = [(a[0] + a[2]) / 2, (a[1] + a[3]) / 2];
+      var cin = cm[0] > a[0] && cm[0] < a[2] && cm[1] > a[1] && cm[1] < a[3], ain = am[0] > c[0] && am[0] < c[2] && am[1] > c[1] && am[1] < c[3];
+      var i = overlap(c, a);
+      if (i >= 0.3 || (cin && ain)) best = 'bevestigd';
+      else if ((cin || ain || i >= 0.1) && best !== 'bevestigd') best = 'twijfel';
+    });
+    return best;
+  }
+  function aiCheck() {
+    if (!S.res || S.ai.bezig || !S.ai.beschikbaar) return;
+    var modus = S.ai.modus, kand = zichtbaar().filter(function (k) { return !k.aiVondst; }), payload = { modus: modus }, tegels = [];
+    if (modus === 'foto') {
+      payload.beeld = { data: jpeg(verklein(S.bron, 1280)) };
+    } else {
+      // mozaïek: top 6 kandidaten als genummerde tegels van 320 px (meer detail per kandidaat)
+      var top = kand.slice().sort(function (a, b) { return b.det.score - a.det.score; }).slice(0, 6), T = 320, kol = 3, rij = Math.ceil(top.length / kol);
+      var m = document.createElement('canvas'); m.width = kol * T; m.height = Math.max(1, rij) * T;
+      var mx = m.getContext('2d'); mx.fillStyle = '#fff'; mx.fillRect(0, 0, m.width, m.height);
+      top.forEach(function (k, i) {
+        var r = rondom(k.det.box, 2.2, 0.04), W = S.bron.width, H = S.bron.height, x0 = (i % kol) * T, y0 = Math.floor(i / kol) * T;
+        mx.drawImage(S.bron, r[1] / 1000 * W, r[0] / 1000 * H, (r[3] - r[1]) / 1000 * W, (r[2] - r[0]) / 1000 * H, x0 + 2, y0 + 2, T - 4, T - 4);
+        mx.fillStyle = '#000'; mx.fillRect(x0 + 2, y0 + 2, 26, 22); mx.fillStyle = '#fff'; mx.font = 'bold 16px Arial'; mx.fillText(String(i + 1), x0 + 9, y0 + 19);
+        tegels.push({ k: k, r: r, x0: x0, y0: y0 });
+      });
+      payload.beeld = { data: jpeg(m) }; payload._w = m.width; payload._h = m.height;
+      kand = top;
+    }
+    if (S.ref) { var rc = S.ref.canvas, s = Math.max(1, 160 / Math.max(rc.width, rc.height)), vc = document.createElement('canvas'); vc.width = Math.round(rc.width * s); vc.height = Math.round(rc.height * s); vc.getContext('2d').drawImage(rc, 0, 0, vc.width, vc.height); payload.voorbeeld = { data: jpeg(vc, 0.9) }; }
+    if (S.kleur || S.maat || !S.ref) payload.beschrijving = beschrijvingEn();
+    var mw = payload._w, mh = payload._h; delete payload._w; delete payload._h;
+    S.ai.bezig = true; aiKnopTekst(); $('aistatus').textContent = '';
+    var t0 = performance.now(), klokAI = setInterval(function () { $('aistatus').textContent = t('nogBezig')(sec(performance.now() - t0)); }, 200);
+    fetch(WORKER + '/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      .then(function (r) { return r.json().then(function (j) { return { st: r.status, j: j }; }); })
+      .then(function (x) {
+        clearInterval(klokAI); S.ai.bezig = false;
+        var j = x.j || {}; if (j.over_vandaag != null) S.ai.over = j.over_vandaag;
+        if (x.st !== 200) { $('aistatus').textContent = x.st === 429 ? t('aiOp') : t('aiDruk'); aiKnopTekst(); return; }
+        // AI-boxen omrekenen naar fotocoördinaten
+        var boxen = [];
+        j.boxen.forEach(function (b) {
+          var q = [b.box_2d[1], b.box_2d[0], b.box_2d[3], b.box_2d[2]]; // [y0,x0,y1,x1] in 0-1000 van het verstuurde beeld
+          if (modus === 'foto') { boxen.push(q); return; }
+          var px = [q[0] / 1000 * mh, q[1] / 1000 * mw, q[2] / 1000 * mh, q[3] / 1000 * mw], cy = (px[0] + px[2]) / 2, cx = (px[1] + px[3]) / 2;
+          var tg = tegels.filter(function (g) { return cx >= g.x0 && cx < g.x0 + 320 && cy >= g.y0 && cy < g.y0 + 320; })[0]; if (!tg) return;
+          var r = tg.r, f = function (v, o, a, b2) { return a + (Math.max(0, Math.min(316, v - o - 2)) / 316) * (b2 - a); };
+          boxen.push([f(px[0], tg.y0, r[0], r[2]), f(px[1], tg.x0, r[1], r[3]), f(px[2], tg.y0, r[0], r[2]), f(px[3], tg.x0, r[1], r[3])]);
+        });
+        S.kand.forEach(function (k) { delete k.ai; });
+        var tel = { bevestigd: 0, twijfel: 0, nee: 0 };
+        kand.forEach(function (k) { k.ai = oordeel(k.det.box, boxen); tel[k.ai]++; });
+        // AI-boxen die bij geen enkele kandidaat horen: nieuwe AI-vondsten
+        var nieuw = boxen.filter(function (q) { return !S.kand.some(function (k) { return oordeel(k.det.box, [q]) !== 'nee'; }); });
+        S.kand = S.kand.filter(function (k) { return !k.aiVondst; });
+        nieuw.forEach(function (q) { S.kand.push({ det: { box: q, score: 90, vorm: 0, kleur: null }, status: 'open', aiVondst: true }); });
+        S.aiBoxen = boxen;
+        $('aistatus').textContent = (boxen.length ? t('aiUitslag')(tel.bevestigd, tel.twijfel, tel.nee, nieuw.length) : t('aiGeen')) + '\n' +
+          t('aiTijd')(sec(performance.now() - t0), j.model, sec(j.tijd.model_ms), modus === 'foto' ? t('aiFoto') : t('aiMozaiek'));
+        aiKnopTekst(); naFeedback();
+      }, function () { clearInterval(klokAI); S.ai.bezig = false; $('aistatus').textContent = t('aiFout'); aiKnopTekst(); });
+  }
+  $('aiknop').addEventListener('click', aiCheck);
+  $('aimodus').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return; S.ai.modus = b.getAttribute('data-m');
+    $('aimodus').querySelectorAll('button').forEach(function (x) { x.classList.toggle('aan', x === b); });
+  });
 
   // ---------- knoppen ----------
   $('taalknop').addEventListener('click', function () { taal = taal === 'en' ? 'nl' : 'en'; localStorage.setItem('bz_taal', taal); zetTaal(); });
@@ -683,6 +882,6 @@
   $('zoekknop').addEventListener('click', zoek);
 
   if (!(S.n >= 2 && S.n <= 16)) S.n = 6;
-  $('raster').value = S.n; koppel(); zetTaal(); werkSchattingBij();
+  $('raster').value = S.n; koppel(); zetTaal(); werkSchattingBij(); aiStatus();
   window.bzState = S; window.__KF = KF; // voor tests
 })();

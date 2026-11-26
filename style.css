@@ -100,3 +100,13 @@ input[type=text]:focus { outline: none; border-color: #003A5C; }
 
 #resfoto { display: block; width: 100%; height: auto; border-radius: 8px; background: #ddd; touch-action: none; cursor: move; user-select: none; -webkit-user-select: none; }
 .resfotowrap { width: 100%; }
+
+.aiblok { margin-top: 14px; padding: 12px; border: 2px dashed #7b1fa2; border-radius: 10px; background: #faf5fc; }
+.aiblok .segment { border-color: #7b1fa2; }
+.aiblok .segment button { color: #7b1fa2; border-left-color: #7b1fa2; }
+.aiblok .segment button.aan { background: #7b1fa2; color: #fff; }
+#aiknop { background: #7b1fa2; border-color: #7b1fa2; width: 100%; margin-top: 8px; }
+#aiknop:disabled { background: #c9b3d3; border-color: #c9b3d3; cursor: not-allowed; }
+.aikeuze { gap: 8px; align-items: center; flex-wrap: wrap; }
+.aibadge { display: inline-block; font-size: 12px; font-weight: bold; border-radius: 10px; padding: 1px 7px; margin-left: 4px; color: #fff; }
+.aibadge.bevestigd { background: #2e7d32; } .aibadge.twijfel { background: #ef6c00; } .aibadge.nee { background: #757575; } .aibadge.vondst { background: #7b1fa2; }

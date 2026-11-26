@@ -318,7 +318,7 @@
       if (neg > 0.5 && neg > pos) s *= 0.45; else if (neg > 0.4) s *= 0.8;
       k.score = Math.round(100 * Math.max(0, Math.min(1, s)));
       var rad = k.hoek * Math.PI / 180, cw = Math.abs(Math.cos(rad)) * k.bw + Math.abs(Math.sin(rad)) * k.bh, ch = Math.abs(Math.sin(rad)) * k.bw + Math.abs(Math.cos(rad)) * k.bh;
-      k.box = [Math.max(0, (k.cy - ch / 2) / h * 1000), Math.max(0, (k.cx - cw / 2) / w * 1000), Math.min(1000, (k.cy + ch / 2) / h * 1000), Math.min(1000, (k.cx + cw / 2) / w * 1000)];
+      if (!k.vast) k.box = [Math.max(0, (k.cy - ch / 2) / h * 1000), Math.max(0, (k.cx - cw / 2) / w * 1000), Math.min(1000, (k.cy + ch / 2) / h * 1000), Math.min(1000, (k.cx + cw / 2) / w * 1000)];
     });
     var lijst = res.kand.slice().sort(function (a, b) { return b.score - a.score; });
     // geen dubbele (het raster bepaalt alleen hoe fijn we zoeken, niet hoeveel per vak)
