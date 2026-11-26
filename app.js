@@ -27,7 +27,7 @@
       netwerk: 'Geen verbinding met de zoekserver. Controleer je internet en probeer het nog eens.',
       onleesbaar: 'Het antwoord van de AI was onleesbaar. Probeer het nog eens.',
       niets: 'Niets gevonden. Tip: spreid de stukjes wat meer uit en maak de foto van dichterbij.',
-      zeker: 'zeker',
+      zeker: 'zeker', zoektijd: 'Zoektijd', model: 'Model', poging: 'poging', geenModel: 'geen model gaf antwoord', server: 'server',
     },
     en: {
       intro: 'Take a photo of the pile, say what you are looking for, and Brick Finder points it out. For building bricks such as LEGO® and other small pieces.',
@@ -53,7 +53,7 @@
       netwerk: 'No connection to the search server. Check your internet and try again.',
       onleesbaar: 'The AI answer could not be read. Please try again.',
       niets: 'Nothing found. Tip: spread the pieces out more and take the photo closer.',
-      zeker: 'sure',
+      zeker: 'sure', zoektijd: 'Search time', model: 'Model', poging: 'attempt', geenModel: 'no model answered', server: 'server',
     }
   };
 
@@ -96,6 +96,25 @@
   }
 
   // ---------- AI ----------
+  // ---------- Tijdmeting (voor testen) ----------
+  function sec(ms) { return (ms / 1000).toFixed(1).replace('.', taal === 'en' ? '.' : ',') + ' s'; }
+  function toonTijd(ms, tijd) {
+    $('zoektijd').textContent = t('zoektijd') + ': ' + sec(ms);
+    var delen = [];
+    if (tijd && Array.isArray(tijd.pogingen)) {
+      var goed = null;
+      tijd.pogingen.forEach(function (p) { if (p.ok) goed = p; });
+      delen.push(t('model') + ': ' + (goed ? goed.model + ' (' + sec(goed.ms) + ')' : t('geenModel')));
+      tijd.pogingen.forEach(function (p, i) {
+        if (!p.ok) delen.push(t('poging') + ' ' + (i + 1) + ' ' + p.model + ': ' + p.status + ' (' + sec(p.ms) + ')');
+      });
+      if (typeof tijd.totaal_ms === 'number') delen.push(t('server') + ' ' + sec(tijd.totaal_ms));
+    }
+    $('tijddetail').textContent = delen.join(' · ');
+    $('tijddetail').hidden = !delen.length;
+    $('tijdblok').hidden = false;
+  }
+
   function foutMet(code, detail) { var e = new Error(code); e.code = code; e.detail = detail || ''; return e; }
 
   // Zoeken via onze Cloudflare Worker (die bewaart de Gemini-sleutel, niet de browser).
@@ -106,7 +125,7 @@
       .catch(function () { throw foutMet('netwerk'); })
       .then(function (r) {
         return r.json().catch(function () { return {}; }).then(function (d) {
-          if (!r.ok || d.fout_code) throw foutMet(d.fout_code || 'ai_fout', r.ok ? '' : 'HTTP ' + r.status);
+          if (!r.ok || d.fout_code) { var e = foutMet(d.fout_code || 'ai_fout', r.ok ? '' : 'HTTP ' + r.status); e.tijd = d.tijd; throw e; }
           if (!Array.isArray(d.kandidaten)) throw foutMet('onleesbaar');
           return d;
         });
@@ -154,6 +173,8 @@
     if (!stapelFile) { melding(t('foto_ontbreekt')); return; }
     if (!wat && !voorbeeldFile) { melding(t('wat_ontbreekt')); return; }
     var knop = $('zoekknop');
+    var start = performance.now();
+    $('tijdblok').hidden = true;
     knop.disabled = true; knop.textContent = t('bezig');
     var stapelCanvas;
     Promise.all([verklein(stapelFile, 1600), voorbeeldFile ? verklein(voorbeeldFile, 1000) : Promise.resolve(null)])
@@ -175,12 +196,14 @@
           lijst.appendChild(li);
         });
         if (typeof d.over_vandaag === 'number') { laatsteOver = d.over_vandaag; $('teller').textContent = t('over')(laatsteOver); }
+        toonTijd(performance.now() - start, d.tijd);
         $('uitleg').textContent = d.kandidaten.length ? d.uitleg : ((d.uitleg ? d.uitleg + ' ' : '') + t('niets'));
         $('resultaat').scrollIntoView({ behavior: 'smooth', block: 'start' });
       })
       .catch(function (err) {
         var code = (err && err.code) || 'ai_fout';
         if (code === 'limiet') { laatsteOver = 0; $('teller').textContent = t('over')(0); }
+        toonTijd(performance.now() - start, err && err.tijd);
         melding((t(code) || t('ai_fout')) + (err && err.detail && code === 'ai_fout' ? ' (' + err.detail + ')' : ''));
       })
       .then(function () { knop.disabled = false; knop.textContent = t('zoek'); });
