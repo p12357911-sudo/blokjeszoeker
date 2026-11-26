@@ -8,8 +8,12 @@
     nl: {
       intro: 'Maak een foto van de berg, laat zien wat je zoekt, en de Blokjeszoeker wijst het aan. Alles gebeurt op je eigen telefoon of computer. Voor bouwsteentjes zoals LEGO® en andere kleine stukjes.',
       stap1: '1. Foto van de berg', stapelHint: 'Leg de stukjes zo plat mogelijk uit, met goed licht, recht van boven.',
-      fotoHint: 'Tik op de foto om in te zoomen in het vergrootglas.',
-      raster: 'Raster:', rasterHint: 'Grof raster = sneller. Fijn raster = nauwkeuriger voor kleine stukjes, maar trager.',
+      fotoHint: 'Verschuiven/zoomen: knijp met twee vingers of scroll om te zoomen, sleep om te verschuiven. Na het zoeken: tik op een plek om die in het vergrootglas te bekijken.',
+      fotoHintWijs: 'Aanwijzen: sleep met één vinger een kader om één blokje. Daarna kun je de hoekjes verslepen of het kader verschuiven. Met twee vingers kun je nog steeds zoomen.',
+      modusKijk: '✋ Verschuiven / zoomen', modusWijs: '⬚ Blokje aanwijzen', passend: 'Passend',
+      raster: 'Raster (detail):', rasterHint: 'Schuif naar rechts voor een fijner raster: vindt kleinere stukjes, maar zoekt langer.',
+      schatting: function (tijd, maat, nog) { return 'Geschatte zoektijd ≈ ' + tijd + ' (werkformaat ' + maat + ')' + nog; },
+      schattingNog: ' · ruwe schatting, wordt nauwkeuriger na de eerste zoekactie',
       stap2: '2. Wat zoek je?',
       refTitel: 'Laat zien wat je zoekt (nodig)',
       refUitleg: 'Wijs er één aan in de berg (werkt het best), of maak een foto van het blokje en zet er een kader omheen.',
@@ -45,8 +49,12 @@
     en: {
       intro: 'Take a photo of the pile, show what you are looking for, and Brick Finder points it out. Everything happens on your own phone or computer. For building bricks such as LEGO® and other small pieces.',
       stap1: '1. Photo of the pile', stapelHint: 'Spread the pieces out as flat as possible, with good light, straight from above.',
-      fotoHint: 'Tap the photo to zoom in with the magnifier.',
-      raster: 'Grid:', rasterHint: 'Coarse grid = faster. Fine grid = more precise for small pieces, but slower.',
+      fotoHint: 'Move/zoom: pinch with two fingers or scroll to zoom, drag to move. After searching: tap a spot to view it in the magnifier.',
+      fotoHintWijs: 'Point out: drag a box around one piece with one finger. Then drag the corners or move the box. Two fingers still zoom.',
+      modusKijk: '✋ Move / zoom', modusWijs: '⬚ Point out a piece', passend: 'Fit',
+      raster: 'Grid (detail):', rasterHint: 'Slide right for a finer grid: finds smaller pieces, but takes longer.',
+      schatting: function (tijd, maat, nog) { return 'Estimated search time ≈ ' + tijd + ' (working size ' + maat + ')' + nog; },
+      schattingNog: ' · rough estimate, gets more accurate after the first search',
       stap2: '2. What are you looking for?',
       refTitel: 'Show what you are looking for (needed)',
       refUitleg: 'Point one out in the pile (works best), or take a photo of the piece and draw a box around it.',
@@ -98,11 +106,10 @@
   function t(k) { return T[taal][k]; }
 
   var S = {
-    bron: null, n: parseInt(localStorage.getItem('bz_raster') || '3', 10),
+    bron: null, n: parseInt(localStorage.getItem('bz_raster') || '6', 10), modus: 'kijk',
     maat: null, soort: null, kleur: null, licht: 0, kleurGewicht: 0.25,
     ref: null,      // { canvas: uitsnede, box: [0-1000] als uit de stapel, bron: 'foto'|'bestand', vol: canvas van de losse foto }
     hoek: 0, draaien: true,
-    wijsModus: false, sleep: null, refSleep: null,
     res: null, kand: [], negatief: [], vizier: null, gekozen: null, zoom: 3, bezig: false, tijd: null
   };
 
@@ -226,6 +233,7 @@
     });
     $('kleurproef').style.background = S.kleur ? mengKleur(S.kleur.hex, S.licht) : 'transparent';
     $('samenvatting').textContent = samenvatting() || t('niksGekozen');
+    if (S.bron) werkSchattingBij();
   }
 
   function zetTaal() {
@@ -234,7 +242,7 @@
     document.title = taal === 'en' ? 'Brick Finder' : 'Blokjeszoeker';
     document.querySelector('h1').textContent = document.title;
     $('taalknop').textContent = taal === 'en' ? 'NL' : 'EN';
-    if (S.wijsModus) $('wijsknop').textContent = t('wijsBezig');
+    $('fotohint').textContent = t(S.modus === 'wijs' ? 'fotoHintWijs' : 'fotoHint'); werkSchattingBij();
     if (S.ref) $('reftekst').textContent = S.ref.bron === 'foto' ? t('refUitFoto') : t('refUitBestand');
     bouwKeuzes(); tekenLijst(); if (S.tijd) toonTijd();
   }
@@ -246,42 +254,47 @@
     z.sort(function (a, b) { return (b.status === 'hem') - (a.status === 'hem') || b.det.score - a.det.score; });
     return z.slice(0, 3);
   }
-  function teken() {
-    if (!S.bron) return;
-    var c = $('foto'), W = S.bron.width, H = S.bron.height;
-    if (c.width !== W || c.height !== H) { c.width = W; c.height = H; }
-    var ctx = c.getContext('2d'); ctx.drawImage(S.bron, 0, 0);
-    var dik = Math.max(2, Math.round(Math.max(W, H) / 400));
-    ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = dik; ctx.setLineDash([dik * 4, dik * 3]);
-    for (var i = 1; i < S.n; i++) {
-      ctx.beginPath(); ctx.moveTo(i * W / S.n, 0); ctx.lineTo(i * W / S.n, H); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(0, i * H / S.n); ctx.lineTo(W, i * H / S.n); ctx.stroke();
+  // ---------- tekenen op de hoofdfoto (via de kijker: zoom/verschuiven) ----------
+  function teken() { if (KF && S.bron) KF.teken(); }
+  function tekenOpFoto(ctx, px) {
+    var W = S.bron.width, H = S.bron.height;
+    ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 1.5 * px; ctx.setLineDash([6 * px, 5 * px]);
+    ctx.beginPath();
+    for (var i = 1; i < S.n; i++) { ctx.moveTo(i * W / S.n, 0); ctx.lineTo(i * W / S.n, H); ctx.moveTo(0, i * H / S.n); ctx.lineTo(W, i * H / S.n); }
+    ctx.stroke(); ctx.setLineDash([]);
+    if (S.ref && S.ref.box && S.modus !== 'wijs') {
+      var r = S.ref.box; ctx.lineWidth = 2.5 * px; ctx.strokeStyle = '#ffb000'; ctx.setLineDash([5 * px, 4 * px]);
+      ctx.strokeRect(r[1] / 1000 * W, r[0] / 1000 * H, (r[3] - r[1]) / 1000 * W, (r[2] - r[0]) / 1000 * H); ctx.setLineDash([]);
     }
-    ctx.restore();
-    if (S.ref && S.ref.box) {
-      var r = S.ref.box; ctx.save(); ctx.lineWidth = dik * 1.5; ctx.strokeStyle = '#ffb000'; ctx.setLineDash([dik * 2, dik * 2]);
-      ctx.strokeRect(r[1] / 1000 * W, r[0] / 1000 * H, (r[3] - r[1]) / 1000 * W, (r[2] - r[0]) / 1000 * H); ctx.restore();
-    }
-    var font = Math.max(14, Math.round(Math.max(W, H) / 40));
+    var font = 15 * px;
     toonLijst().forEach(function (k, idx) {
       var b = k.det.box, x = b[1] / 1000 * W, y = b[0] / 1000 * H, w = (b[3] - b[1]) / 1000 * W, h = (b[2] - b[0]) / 1000 * H;
-      var kleur = k.status === 'hem' ? '#00c853' : KLEUREN_KADER[idx], p = dik * 2;
-      ctx.lineWidth = dik * 2 + 2; ctx.strokeStyle = '#fff'; ctx.strokeRect(x - p, y - p, w + 2 * p, h + 2 * p);
-      ctx.lineWidth = dik * 2; ctx.strokeStyle = kleur; ctx.strokeRect(x - p, y - p, w + 2 * p, h + 2 * p);
-      var rr = font * 0.7, cx = Math.max(rr, x - p), cy = Math.max(rr, y - p);
+      var kleur = k.status === 'hem' ? '#00c853' : KLEUREN_KADER[idx], p = 3 * px;
+      ctx.lineWidth = 5 * px; ctx.strokeStyle = '#fff'; ctx.strokeRect(x - p, y - p, w + 2 * p, h + 2 * p);
+      ctx.lineWidth = 3 * px; ctx.strokeStyle = kleur; ctx.strokeRect(x - p, y - p, w + 2 * p, h + 2 * p);
+      var rr = 11 * px, cx = x - p, cy = y - p;
       ctx.beginPath(); ctx.arc(cx, cy, rr, 0, 2 * Math.PI); ctx.fillStyle = kleur; ctx.fill();
-      ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+      ctx.lineWidth = 2 * px; ctx.strokeStyle = '#fff'; ctx.stroke();
       ctx.fillStyle = '#fff'; ctx.font = 'bold ' + font + 'px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(k.status === 'hem' ? '✓' : String(idx + 1), cx, cy + 1);
+      ctx.fillText(k.status === 'hem' ? '✓' : String(idx + 1), cx, cy + px);
     });
-    if (S.vizier) {
-      var v = S.vizier;
-      ctx.save(); ctx.lineWidth = dik * 1.5; ctx.strokeStyle = '#111'; ctx.strokeRect(v[1] / 1000 * W, v[0] / 1000 * H, (v[3] - v[1]) / 1000 * W, (v[2] - v[0]) / 1000 * H);
-      ctx.setLineDash([dik * 3, dik * 3]); ctx.strokeStyle = '#fff'; ctx.strokeRect(v[1] / 1000 * W, v[0] / 1000 * H, (v[3] - v[1]) / 1000 * W, (v[2] - v[0]) / 1000 * H); ctx.restore();
+    if (S.vizier && S.modus !== 'wijs') {
+      var v = S.vizier, vx = v[1] / 1000 * W, vy = v[0] / 1000 * H, vw = (v[3] - v[1]) / 1000 * W, vh = (v[2] - v[0]) / 1000 * H;
+      ctx.lineWidth = 2 * px; ctx.strokeStyle = '#111'; ctx.strokeRect(vx, vy, vw, vh);
+      ctx.setLineDash([5 * px, 5 * px]); ctx.strokeStyle = '#fff'; ctx.strokeRect(vx, vy, vw, vh); ctx.setLineDash([]);
     }
-    if (S.sleep && S.sleep.soort === 'wijs') {
-      var a = S.sleep; ctx.save(); ctx.lineWidth = dik * 2; ctx.strokeStyle = '#ffb000'; ctx.setLineDash([dik * 4, dik * 2]);
-      ctx.strokeRect(Math.min(a.x0, a.x1) / 1000 * W, Math.min(a.y0, a.y1) / 1000 * H, Math.abs(a.x1 - a.x0) / 1000 * W, Math.abs(a.y1 - a.y0) / 1000 * H); ctx.restore();
+  }
+  // Vergrote voorvertoning van het kader, in de hoek van de foto (tijdens aanwijzen)
+  function naTekenenFoto(k) {
+    $('zoomwaarde').textContent = Math.round(k.zoomFactor() * 100) + '%';
+    if (S.modus === 'wijs' && k.kader) {
+      var q = k.kader, ctx = k.c.getContext('2d'), d = k.dpr, Z = Math.min(110, k.cw * 0.3);
+      var links = (q[0] + q[2]) / 2 * k.s + k.ox > k.cw / 2; // voorvertoning aan de andere kant dan het kader
+      var x = links ? 8 : k.cw - Z - 8, y = 8, bw = q[2] - q[0], bh = q[3] - q[1], sc = Math.min(Z / bw, Z / bh);
+      ctx.setTransform(d, 0, 0, d, 0, 0);
+      ctx.fillStyle = '#fff'; ctx.fillRect(x - 3, y - 3, Z + 6, Z + 6);
+      ctx.drawImage(S.bron, q[0], q[1], bw, bh, x + (Z - bw * sc) / 2, y + (Z - bh * sc) / 2, bw * sc, bh * sc);
+      ctx.lineWidth = 2; ctx.strokeStyle = '#ffb000'; ctx.strokeRect(x - 3, y - 3, Z + 6, Z + 6);
     }
     tekenLoep();
   }
@@ -324,59 +337,47 @@
     bouwKeuzes();
   }
   function zetHoek(g) { S.hoek = ((Math.round(g) % 360) + 360) % 360; $('hoek').value = S.hoek; tekenRef(); }
-  function tekenEditor() {
-    var r = S.ref; if (!r || !r.vol) return;
-    var c = $('refeditor'); c.width = r.vol.width; c.height = r.vol.height;
-    var ctx = c.getContext('2d'); ctx.drawImage(r.vol, 0, 0);
-    var b = S.refSleep ? [Math.min(S.refSleep.y0, S.refSleep.y1), Math.min(S.refSleep.x0, S.refSleep.x1), Math.max(S.refSleep.y0, S.refSleep.y1), Math.max(S.refSleep.x0, S.refSleep.x1)] : r.kader;
-    if (b) {
-      var dik = Math.max(2, Math.round(Math.max(c.width, c.height) / 200));
-      ctx.lineWidth = dik; ctx.strokeStyle = '#ffb000'; ctx.setLineDash([dik * 3, dik * 2]);
-      ctx.strokeRect(b[1] / 1000 * c.width, b[0] / 1000 * c.height, (b[3] - b[1]) / 1000 * c.width, (b[2] - b[0]) / 1000 * c.height);
-    }
+  // ---------- aanwijzen in de foto ----------
+  function naarBox(k, W, H) { return [k[1] / H * 1000, k[0] / W * 1000, k[3] / H * 1000, k[2] / W * 1000]; }
+  function naarKader(b, W, H) { return [b[1] / 1000 * W, b[0] / 1000 * H, b[3] / 1000 * W, b[2] / 1000 * H]; }
+  function zetModus(m) {
+    S.modus = m;
+    $('modus').querySelectorAll('button').forEach(function (b) { b.classList.toggle('aan', b.getAttribute('data-m') === m); });
+    if (m === 'wijs' && S.ref && S.ref.bron === 'foto') KF.kader = naarKader(S.ref.box, S.bron.width, S.bron.height);
+    else if (m === 'wijs') KF.kader = null;
+    $('fotohint').textContent = t(m === 'wijs' ? 'fotoHintWijs' : 'fotoHint');
+    $('wijsknop').classList.toggle('actief', m === 'wijs');
+    KF.zetModus(m);
   }
-
-  // ---------- aanwijzen / rondkijken ----------
-  function punt(e, el) { var r = el.getBoundingClientRect(); return { x: klem((e.clientX - r.left) / r.width * 1000, 0, 1000), y: klem((e.clientY - r.top) / r.height * 1000, 0, 1000) }; }
+  var KF = null, KE = null;
   function koppel() {
-    var c = $('foto');
-    c.addEventListener('pointerdown', function (e) {
-      if (!S.bron) return; c.setPointerCapture(e.pointerId);
-      var p = punt(e, c);
-      if (S.wijsModus) { S.sleep = { soort: 'wijs', x0: p.x, y0: p.y, x1: p.x, y1: p.y }; teken(); return; }
-      S.sleep = { soort: 'kijk' }; zetVizier(p.y, p.x);
-    });
-    c.addEventListener('pointermove', function (e) {
-      if (!S.sleep) return; var p = punt(e, c);
-      if (S.sleep.soort === 'wijs') { S.sleep.x1 = p.x; S.sleep.y1 = p.y; teken(); } else zetVizier(p.y, p.x);
-    });
-    function los() {
-      if (S.sleep && S.sleep.soort === 'wijs') {
-        var a = S.sleep, box = [Math.min(a.y0, a.y1), Math.min(a.x0, a.x1), Math.max(a.y0, a.y1), Math.max(a.x0, a.x1)];
-        S.sleep = null;
-        if (box[2] - box[0] > 6 && box[3] - box[1] > 6) {
-          S.ref = { canvas: snij(S.bron, box, 24, 400), zoek: snijMetMarge(S.bron, box), box: box, bron: 'foto' };
-          $('refeditorblok').hidden = true; zetHoek(0);
-          S.wijsModus = false; $('wijsknop').textContent = t('wijsAan'); $('wijsknop').classList.remove('actief');
-        }
-        teken(); return;
+    KF = new Kijker($('foto'), {
+      tekenExtra: tekenOpFoto, naTekenen: naTekenenFoto,
+      opTik: function (ix, iy) { if (S.res) zetVizier(iy / S.bron.height * 1000, ix / S.bron.width * 1000); },
+      opKader: function (k, klaar) {
+        var box = naarBox(k, S.bron.width, S.bron.height);
+        S.ref = { canvas: snij(S.bron, box, 24, 400), zoek: klaar ? snijMetMarge(S.bron, box) : null, box: box, bron: 'foto' };
+        $('refeditorblok').hidden = true;
+        if (klaar) { zetHoek(S.hoek); werkSchattingBij(); } else tekenRefSnel();
       }
-      S.sleep = null;
-    }
-    c.addEventListener('pointerup', los); c.addEventListener('pointercancel', los);
+    });
+    $('modus').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b && S.bron) zetModus(b.getAttribute('data-m')); });
+    $('zoomIn').addEventListener('click', function () { KF.zoomOm(1.6); });
+    $('zoomUit').addEventListener('click', function () { KF.zoomOm(1 / 1.6); });
+    $('zoomReset').addEventListener('click', function () { KF.passend(); });
 
-    // kader trekken in de losse voorbeeldfoto
-    var ed = $('refeditor');
-    ed.addEventListener('pointerdown', function (e) { if (!S.ref || !S.ref.vol) return; ed.setPointerCapture(e.pointerId); var p = punt(e, ed); S.refSleep = { x0: p.x, y0: p.y, x1: p.x, y1: p.y }; tekenEditor(); });
-    ed.addEventListener('pointermove', function (e) { if (!S.refSleep) return; var p = punt(e, ed); S.refSleep.x1 = p.x; S.refSleep.y1 = p.y; tekenEditor(); });
-    function edLos() {
-      if (!S.refSleep) return;
-      var a = S.refSleep, box = [Math.min(a.y0, a.y1), Math.min(a.x0, a.x1), Math.max(a.y0, a.y1), Math.max(a.x0, a.x1)];
-      S.refSleep = null;
-      if (box[2] - box[0] > 15 && box[3] - box[1] > 15) { S.ref.kader = box; S.ref.canvas = snij(S.ref.vol, box, 24, 400); S.ref.zoek = snijMetMarge(S.ref.vol, box); tekenRef(); }
-      tekenEditor();
-    }
-    ed.addEventListener('pointerup', edLos); ed.addEventListener('pointercancel', edLos);
+    KE = new Kijker($('refeditor'), {
+      modus: 'wijs', maxHoogte: 0.5,
+      opKader: function (k, klaar) {
+        var r = S.ref; if (!r || !r.vol) return;
+        r.kader = naarBox(k, r.vol.width, r.vol.height); r.canvas = snij(r.vol, r.kader, 24, 400);
+        if (klaar) { r.zoek = snijMetMarge(r.vol, r.kader); tekenRef(); } else tekenRefSnel();
+      }
+    });
+    KE.zetModus('wijs');
+    $('edIn').addEventListener('click', function () { KE.zoomOm(1.6); });
+    $('edUit').addEventListener('click', function () { KE.zoomOm(1 / 1.6); });
+    $('edReset').addEventListener('click', function () { KE.passend(); });
 
     // slepen in de loep verschuift het vizier
     var loep = $('loep'), start = null; loep.style.touchAction = 'none';
@@ -387,42 +388,109 @@
     });
     loep.addEventListener('pointerup', function () { start = null; }); loep.addEventListener('pointercancel', function () { start = null; });
   }
+  function tekenRefSnel() { if (S.ref) { $('refblok').hidden = false; tekenRef(); } }
 
-  // ---------- zoeken (alles in de browser) ----------
-  var klok = null;
+  // ---------- zoeken (alles in de browser, verdeeld over Web Workers) ----------
+  var klok = null, WERKERS = Math.max(1, Math.min(6, (navigator.hardwareConcurrency || 2) - 1)), pool = null, werkersKapot = false;
+  function werkerPool() {
+    if (pool || werkersKapot) return pool;
+    try { pool = []; for (var i = 0; i < WERKERS; i++) pool.push(new Worker('zoekwerker.js')); }
+    catch (e) { pool = null; werkersKapot = true; }
+    return pool;
+  }
+  function aantalCombis() {
+    var hoeken = (S.draaien || !S.ref) ? (S.soort === 'dakpan' ? 12 : 6) : 1;
+    var schalen = S.ref && S.ref.bron === 'foto' ? 3 : 5 + (S.n >= 7 ? 1 : 0) + (S.n >= 11 ? 1 : 0);
+    return hoeken * schalen;
+  }
+  // Tijdschatting: rekenwerk x gemeten snelheid van dit apparaat (na de eerste zoekactie nauwkeuriger)
+  function schatMs() {
+    if (!S.bron) return null;
+    var rate = parseFloat(localStorage.getItem('bz_snelheid') || '0') || 2.5e-6;
+    return BZDetect.rekenwerk(S.bron.width, S.bron.height, S.n, aantalCombis()) * rate / (werkersKapot ? 1 : WERKERS) + 120;
+  }
+  function werkSchattingBij() {
+    $('rasterwaarde').textContent = S.n + '×' + S.n;
+    var ms = schatMs(); if (ms == null) { $('schatting').textContent = ''; return; }
+    var m = BZDetect.werkMaat(S.bron.width, S.bron.height, S.n);
+    $('schatting').textContent = t('schatting')(sec(ms), m.w + '×' + m.h, localStorage.getItem('bz_snelheid') ? '' : t('schattingNog'));
+  }
+  function zoekMetWerkers(bron, o, voortgang) {
+    var ws = werkerPool(); if (!ws) return Promise.reject(new Error('geen werkers'));
+    var m = BZDetect.werkMaat(bron.width, bron.height, o.raster);
+    var c = document.createElement('canvas'); c.width = m.w; c.height = m.h;
+    var cx = c.getContext('2d', { willReadFrequently: true }); cx.imageSmoothingQuality = 'high'; cx.drawImage(bron, 0, 0, m.w, m.h);
+    var beeld = cx.getImageData(0, 0, m.w, m.h);
+    var vbC = o.voorbeeld, vc = document.createElement('canvas'); vc.width = vbC.width; vc.height = vbC.height;
+    var vx = vc.getContext('2d', { willReadFrequently: true }); vx.drawImage(vbC, 0, 0);
+    var vb = vx.getImageData(0, 0, vc.width, vc.height);
+    var oc = { voorbeeldBox: o.voorbeeldBox, hoek: o.hoek, draaien: o.draaien, asymmetrisch: o.asymmetrisch, doelLab: o.doelLab, kleurGewicht: o.kleurGewicht, raster: o.raster };
+    var stopOp = Date.now() + o.stopNa, N = ws.length, klaar = new Array(N).fill(0), tg = performance.now();
+    return new Promise(function (resolve, reject) {
+      var best = null, bestI = null, binnen = 0, gestopt = false, gedaan = 0;
+      ws.forEach(function (w, i) {
+        w.onerror = function (e) { reject(e); };
+        w.onmessage = function (e) {
+          var d = e.data;
+          if (d.cmd === 'voortgang') { klaar[d.deel] = d.klaar; voortgang(klaar.reduce(function (a, b) { return a + b; }, 0) / N); return; }
+          if (d.cmd === 'grof') {
+            if (!best) { best = d.best; bestI = d.bestI; }
+            else for (var p = 0; p < best.length; p++) if (d.best[p] > best[p]) { best[p] = d.best[p]; bestI[p] = d.bestI[p]; }
+            gestopt = gestopt || d.gestopt; gedaan = Math.max(gedaan, d.gedaan);
+            if (++binnen === N) {
+              var grofMs = performance.now() - tg;
+              ws[0].onmessage = function (e2) {
+                var u = e2.data.uit; u.kandidaten = u.kandidaten.map(function (ix) { return u.res.kand[ix]; });
+                u.info.grofMs = grofMs; u.info.gestopt = gestopt; u.info.gedaan = gedaan; u.info.werkers = N;
+                resolve(u);
+              };
+              ws[0].postMessage({ cmd: 'fijn', best: best, bestI: bestI }, [best.buffer, bestI.buffer]);
+            }
+          }
+        };
+        w.postMessage({ cmd: 'grof', beeld: { data: beeld.data.buffer.slice(0), width: m.w, height: m.h }, vb: { data: vb.data.buffer.slice(0), width: vb.width, height: vb.height }, vbPad: vbC.bzPad || 0, o: oc, deel: i, aantal: N, hoofd: i === 0, stopOp: stopOp });
+      });
+    });
+  }
   function zoek() {
     melding('');
     if (!S.bron) { melding(t('foto_ontbreekt')); return; }
     if (!S.ref && !S.maat) { melding(t('wat_ontbreekt')); return; }
+    if (S.ref && !S.ref.zoek) S.ref.zoek = S.ref.bron === 'foto' ? snijMetMarge(S.bron, S.ref.box) : snijMetMarge(S.ref.vol, S.ref.kader);
+    if (S.modus === 'wijs') zetModus('kijk');
     var knop = $('zoekknop'); knop.disabled = true; knop.textContent = t('bezig'); S.bezig = true;
     $('resultaat').hidden = true; $('gevonden').hidden = true; $('tijdblok').hidden = true;
     S.kand = []; S.negatief = []; S.res = null; S.gekozen = null;
-    var t0 = performance.now();
-    clearInterval(klok); klok = setInterval(function () { $('voortgang').textContent = t('nogBezig')(sec(performance.now() - t0)); }, 100);
-    var voorbeeld = S.ref ? S.ref.zoek : BZDetect.kunstVoorbeeld(S.maat, S.soort);
+    var t0 = performance.now(), deel = 0;
+    clearInterval(klok); klok = setInterval(function () { $('voortgang').textContent = t('nogBezig')(sec(performance.now() - t0) + (deel ? ' · ' + Math.round(deel * 100) + '%' : '')); }, 100);
     var opties = {
-      voorbeeld: voorbeeld, voorbeeldBox: S.ref && S.ref.box ? S.ref.box : null,
+      voorbeeld: S.ref ? S.ref.zoek : BZDetect.kunstVoorbeeld(S.maat, S.soort), voorbeeldBox: S.ref && S.ref.box ? S.ref.box : null,
       hoek: S.hoek, draaien: S.draaien || !S.ref, asymmetrisch: S.soort === 'dakpan',
-      doelLab: doelLab(), kleurGewicht: S.kleurGewicht, raster: S.n, stopNa: TIJDLIMIET_MS
+      doelLab: doelLab(), kleurGewicht: S.kleurGewicht, raster: S.n, stopNa: TIJDLIMIET_MS,
+      voortgang: function (f) { deel = f; }
     };
-    // even wachten zodat de knop en klok eerst getekend worden
-    setTimeout(function () {
-      BZDetect.zoek(S.bron, opties).then(function (uit) {
-        S.res = uit.res;
-        S.kand = uit.kandidaten.map(function (d) { return { det: d, status: 'open' }; });
-        // het aangewezen voorbeeld zelf is geen nieuwe vondst
-        if (S.ref && S.ref.box) S.kand = S.kand.filter(function (k) { return overlap(k.det.box, S.ref.box) < 0.3; });
-        S.tijd = { totaal: performance.now() - t0, info: uit.info, her: null };
-        klaar();
-        if (uit.info.gestopt) melding(t('gestopt'));
-      }, function (e) { console.error(e); melding(t('geen_foto')); klaar(); });
-    }, 30);
+    var ops = BZDetect.rekenwerk(S.bron.width, S.bron.height, S.n, aantalCombis());
+    zoekMetWerkers(S.bron, opties, opties.voortgang).catch(function (e) {
+      console.warn('Web Workers niet beschikbaar, zoek op de hoofddraad', e); werkersKapot = true; pool = null;
+      return BZDetect.zoek(S.bron, opties);
+    }).then(function (uit) {
+      S.res = uit.res;
+      S.kand = uit.kandidaten.map(function (d) { return { det: d, status: 'open' }; });
+      // het aangewezen voorbeeld zelf is geen nieuwe vondst
+      if (S.ref && S.ref.box) S.kand = S.kand.filter(function (k) { return overlap(k.det.box, S.ref.box) < 0.3; });
+      var totaal = performance.now() - t0;
+      S.tijd = { totaal: totaal, info: uit.info, her: null };
+      if (!uit.info.gestopt) localStorage.setItem('bz_snelheid', String(Math.max(1e-7, (totaal - 120) * (uit.info.werkers || 1) / ops)));
+      klaar();
+      if (uit.info.gestopt) melding(t('gestopt'));
+    }, function (e) { console.error(e); melding(t('geen_foto')); klaar(); });
     function klaar() {
       clearInterval(klok); $('voortgang').textContent = '';
       knop.disabled = false; knop.textContent = t('zoek'); S.bezig = false;
-      toonResultaat();
+      werkSchattingBij(); toonResultaat();
     }
   }
+
 
   function toonResultaat() {
     $('resultaat').hidden = false;
@@ -437,6 +505,8 @@
     var b = k.det.box, W = S.bron.width, H = S.bron.height;
     var nodig = Math.max((b[2] - b[0]) / 1000 * H, (b[3] - b[1]) / 1000 * W) * 3.2;
     S.zoom = klem(Math.round(Math.min(W, H) / nodig - 0.5), 1, 6); $('zoom').value = S.zoom;
+    // als de hoofdfoto is ingezoomd: meeschuiven naar dit blokje
+    if (KF && KF.zoomFactor() > 1.05) { KF.ox = KF.cw / 2 - (b[1] + b[3]) / 2000 * W * KF.s; KF.oy = KF.ch / 2 - (b[0] + b[2]) / 2000 * H * KF.s; KF._klem(); }
     zetVizier((b[0] + b[2]) / 2, (b[1] + b[3]) / 2); tekenLijst();
   }
   function tekenLijst() {
@@ -523,42 +593,42 @@
   $('taalknop').addEventListener('click', function () { taal = taal === 'en' ? 'nl' : 'en'; localStorage.setItem('bz_taal', taal); zetTaal(); });
   $('stapel').addEventListener('change', function () {
     var f = this.files[0]; if (!f) return;
-    laadBestand(f, 1600).then(function (c) {
+    laadBestand(f, 2400).then(function (c) {
       S.bron = c; S.kand = []; S.res = null; S.vizier = null; $('resultaat').hidden = true; $('tijdblok').hidden = true;
       if (S.ref && S.ref.bron === 'foto') { S.ref = null; $('refblok').hidden = true; }
-      $('fotoblok').hidden = false; $('wijsknop').disabled = false; teken(); melding(''); bouwKeuzes();
+      $('fotoblok').hidden = false; $('wijsknop').disabled = false;
+      KF.zetBeeld(c); zetModus('kijk'); werkSchattingBij(); melding(''); bouwKeuzes();
     }, function () { melding(t('geen_foto')); });
   });
   $('voorbeeld').addEventListener('change', function () {
     var f = this.files[0]; if (!f) return;
-    laadBestand(f, 900).then(function (c) {
+    laadBestand(f, 1200).then(function (c) {
       var kader = [100, 100, 900, 900];
       S.ref = { vol: c, kader: kader, canvas: snij(c, kader, 24, 400), zoek: snijMetMarge(c, kader), bron: 'bestand' };
-      $('refeditorblok').hidden = false; tekenEditor(); zetHoek(0); teken();
+      $('refeditorblok').hidden = false; KE.zetBeeld(c); KE.kader = naarKader(kader, c.width, c.height); KE.teken();
+      if (S.modus === 'wijs') zetModus('kijk');
+      zetHoek(0); teken(); werkSchattingBij();
     }, function () { melding(t('geen_foto')); });
   });
   $('wijsknop').addEventListener('click', function () {
-    S.wijsModus = !S.wijsModus;
-    this.textContent = S.wijsModus ? t('wijsBezig') : t('wijsAan'); this.classList.toggle('actief', S.wijsModus);
-    if (S.wijsModus) $('foto').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (!S.bron) return;
+    zetModus(S.modus === 'wijs' ? 'kijk' : 'wijs');
+    if (S.modus === 'wijs') $('fotoblok').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
-  $('refweg').addEventListener('click', function () { S.ref = null; $('refblok').hidden = true; $('refeditorblok').hidden = true; $('voorbeeld').value = ''; teken(); bouwKeuzes(); });
+
+  $('refweg').addEventListener('click', function () { S.ref = null; if (S.modus === 'wijs') { KF.kader = null; zetModus('kijk'); } $('refblok').hidden = true; $('refeditorblok').hidden = true; $('voorbeeld').value = ''; teken(); bouwKeuzes(); });
   $('hoek').addEventListener('input', function () { zetHoek(parseInt(this.value, 10)); });
   $('draaiL').addEventListener('click', function () { zetHoek(S.hoek - 90); });
   $('draaiR').addEventListener('click', function () { zetHoek(S.hoek + 90); });
-  $('draaien').addEventListener('change', function () { S.draaien = this.checked; bouwKeuzes(); });
+  $('draaien').addEventListener('change', function () { S.draaien = this.checked; bouwKeuzes(); werkSchattingBij(); });
   $('licht').addEventListener('input', function () { S.licht = parseInt(this.value, 10); bouwKeuzes(); herkleur(); });
   $('kleurgewicht').addEventListener('input', function () { S.kleurGewicht = parseInt(this.value, 10) / 100; $('kleurgewichtwaarde').textContent = this.value + '%'; herkleur(); });
-  $('raster').addEventListener('click', function (e) {
-    var b = e.target.closest('button'); if (!b) return;
-    S.n = parseInt(b.getAttribute('data-n'), 10); localStorage.setItem('bz_raster', S.n); markeerRaster(); teken();
-  });
-  function markeerRaster() { $('raster').querySelectorAll('button').forEach(function (b) { b.classList.toggle('aan', parseInt(b.getAttribute('data-n'), 10) === S.n); }); }
+  $('raster').addEventListener('input', function () { S.n = parseInt(this.value, 10); localStorage.setItem('bz_raster', S.n); werkSchattingBij(); teken(); });
   $('zoom').addEventListener('input', function () { S.zoom = parseInt(this.value, 10); var m = vizierMidden(); zetVizier(m[0], m[1]); });
   document.querySelectorAll('.loepknoppen [data-actie]').forEach(function (b) { b.addEventListener('click', function () { feedback(b.getAttribute('data-actie'), null); }); });
   $('zoekknop').addEventListener('click', zoek);
 
-  if ([2, 3, 4, 5].indexOf(S.n) < 0) S.n = 3;
-  markeerRaster(); koppel(); zetTaal();
-  window.bzState = S; // voor tests
+  if (!(S.n >= 2 && S.n <= 16)) S.n = 6;
+  $('raster').value = S.n; koppel(); zetTaal(); werkSchattingBij();
+  window.bzState = S; window.__KF = KF; // voor tests
 })();

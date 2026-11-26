@@ -21,8 +21,13 @@
   function hex2lab(hex) { return rgb2lab(parseInt(hex.substr(1, 2), 16), parseInt(hex.substr(3, 2), 16), parseInt(hex.substr(5, 2), 16)); }
 
   // ---------- beelden ----------
+  function maakCanvas(w, h) {
+    if (typeof document !== 'undefined') { var c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+    return new OffscreenCanvas(w, h);
+  }
   function pixels(canvas, w, h) {
-    var c = document.createElement('canvas'); c.width = w; c.height = h;
+    if (canvas.data && canvas.width === w && canvas.height === h) return canvas.data; // al ImageData in het goede formaat
+    var c = maakCanvas(w, h);
     var ctx = c.getContext('2d', { willReadFrequently: true }); ctx.imageSmoothingQuality = 'high'; ctx.drawImage(canvas, 0, 0, w, h);
     return ctx.getImageData(0, 0, w, h).data;
   }
@@ -51,19 +56,19 @@
     }
     return { E: H, w: w2, h: h2 };
   }
-  function analyseer(canvas, maxZijde) {
-    var s = Math.min(1, maxZijde / Math.max(canvas.width, canvas.height));
-    var w = Math.max(8, Math.round(canvas.width * s)), h = Math.max(8, Math.round(canvas.height * s));
-    var gl = grijsEnLab(pixels(canvas, w, h), w * h);
-    var E = sobel(gl.G, w, h);
-    return { w: w, h: h, E: E, L: gl.L, A: gl.A, B: gl.B, half: halveer(E, w, h) };
+  function analyseer(bron, w, h, alleenRand) {
+    var px = pixels(bron, w, h), n = w * h, G, L = null, A = null, B = null;
+    if (alleenRand) { G = new Float32Array(n); for (var p = 0, q = 0; p < n; p++, q += 4) G[p] = 0.299 * px[q] + 0.587 * px[q + 1] + 0.114 * px[q + 2]; }
+    else { var gl = grijsEnLab(px, n); G = gl.G; L = gl.L; A = gl.A; B = gl.B; }
+    var E = sobel(G, w, h);
+    return { w: w, h: h, E: E, L: L, A: A, B: B, half: halveer(E, w, h) };
   }
 
   // ---------- sjabloon: gedraaid randen-beeld met masker (alleen pixels binnen het gedraaide voorbeeld) ----------
   function sjabloon(canvas, breedte, hoogte, graden, maxK) {
     var rad = graden * Math.PI / 180, cos = Math.abs(Math.cos(rad)), sin = Math.abs(Math.sin(rad));
     var W = Math.max(5, Math.round(breedte * cos + hoogte * sin)) + 2, H = Math.max(5, Math.round(breedte * sin + hoogte * cos)) + 2;
-    var c = document.createElement('canvas'); c.width = W; c.height = H;
+    var c = maakCanvas(W, H);
     var ctx = c.getContext('2d', { willReadFrequently: true });
     ctx.translate(W / 2, H / 2); ctx.rotate(rad); ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(canvas, -breedte / 2, -hoogte / 2, breedte, hoogte);
@@ -120,6 +125,24 @@
     }
     return n ? som / n : 100;
   }
+  // Lab-pixels rond een punt bewaren, zodat de kleur later zonder het hele beeld opnieuw te scoren is
+  function labMonster(img, cx, cy, r) {
+    var uit = [];
+    for (var y = Math.round(cy - r); y <= cy + r; y++) for (var x = Math.round(cx - r); x <= cx + r; x++) {
+      if (x < 0 || y < 0 || x >= img.w || y >= img.h) continue;
+      var p = y * img.w + x; uit.push(img.L[p], img.A[p], img.B[p]);
+    }
+    return Float32Array.from(uit);
+  }
+  function kleurScore(labs, doel) {
+    var som = 0, n = 0, lw = doel[1] * doel[1] + doel[2] * doel[2] < 150 ? 1 : 0.45;
+    for (var i = 0; i < labs.length; i += 3) {
+      var dl = (labs[i] - doel[0]) * lw, da = labs[i + 1] - doel[1], db = labs[i + 2] - doel[2];
+      som += Math.sqrt(dl * dl + da * da + db * db); n++;
+    }
+    var afst = n ? som / n : 100;
+    return Math.exp(-afst * afst / (2 * 22 * 22));
+  }
   function hoofdkleur(canvas) {
     var w = 64, h = Math.max(8, Math.round(64 * canvas.height / canvas.width)), d = pixels(canvas, w, h), pts = [];
     for (var y = Math.floor(h * 0.25); y < h * 0.75; y++) for (var x = Math.floor(w * 0.25); x < w * 0.75; x++) { var q = (y * w + x) * 4; if (d[q + 3] > 250) pts.push(rgb2lab(d[q], d[q + 1], d[q + 2])); }
@@ -140,8 +163,8 @@
 
   // Kunstmatig voorbeeld (bovenaanzicht) als er geen foto-voorbeeld is maar wel een standaardmaat
   function kunstVoorbeeld(maat, soort) {
-    var u = 24, P = 0.2, iw = maat[1] * u, ih = maat[0] * u, c = document.createElement('canvas');
-    c.width = Math.round(iw * (1 + 2 * P)); c.height = Math.round(ih * (1 + 2 * P)); c.bzPad = P;
+    var u = 24, P = 0.2, iw = maat[1] * u, ih = maat[0] * u, c = maakCanvas(Math.round(iw * (1 + 2 * P)), Math.round(ih * (1 + 2 * P)));
+    c.bzPad = P;
     var ctx = c.getContext('2d');
     ctx.fillStyle = '#707070'; ctx.fillRect(0, 0, c.width, c.height);
     ctx.translate(iw * P, ih * P);
@@ -157,120 +180,127 @@
 
   var pauze = function () { return new Promise(function (r) { setTimeout(r, 0); }); };
 
-  /**
-   * bron: canvas van de stapel. o = {
-   *   voorbeeld: canvas (uitsnede, al in de juiste draaiing), voorbeeldBox: box 0-1000 als het uit deze foto komt (schaal bekend),
-   *   draaien: bool ('kan gedraaid liggen'), hoek: graden (draaiing die de gebruiker koos),
-   *   doelLab: [L,a,b] of null, kleurGewicht: 0..1, raster: 2..5, negatief: [patch-objecten] }
-   * geeft Promise<{kandidaten, ms, info}>
-   */
-  function zoek(bron, o) {
-    var t0 = performance.now();
-    var maxZ = { 2: 480, 3: 640, 4: 800, 5: 1000 }[o.raster] || 640;
-    var img = analyseer(bron, maxZ), w = img.w, h = img.h, half = img.half;
-    var vb = o.voorbeeld;
-    if (!vb) return Promise.resolve({ kandidaten: [], ms: performance.now() - t0, info: { fout: 'geen_voorbeeld' } });
+  // ---------- zoeken, in drie delen zodat het over Web Workers verdeeld kan worden ----------
+  // detail (2..16, de schuif 'raster'): bepaalt het werkformaat. 2 = 320 px (snel), 16 = 2400 px (heel fijn).
+  function werkZijde(detail) { var n = Math.max(2, Math.min(16, detail || 6)); return Math.round(320 * Math.pow(7.5, (n - 2) / 14)); }
+  function werkMaat(W, H, detail) { var s = Math.min(1, werkZijde(detail) / Math.max(W, H)); return { w: Math.max(8, Math.round(W * s)), h: Math.max(8, Math.round(H * s)) }; }
 
-    // schalen (lange zijde van het voorbeeld in werkpixels)
-    // bzPad: marge rond het blokje in het voorbeeld (fractie per kant), zodat de buitenrand van het blokje in het sjabloon zit
-    var asp = vb.width / vb.height, lang = [], pf = 1 + 2 * (vb.bzPad || 0);
+  // a) voorbereiden: beeld analyseren en de lijst (draaiing x maat) maken
+  function voorbereid(bron, o) {
+    var m = werkMaat(bron.width, bron.height, o.raster);
+    var img = analyseer(bron, m.w, m.h, o.alleenRand), w = img.w, h = img.h;
+    var vb = o.voorbeeld, asp = vb.width / vb.height, lang = [], pf = 1 + 2 * (vb.bzPad || 0);
     if (o.voorbeeldBox) {
-      var b = o.voorbeeldBox, bw = (b[3] - b[1]) / 1000 * w, bh = (b[2] - b[0]) / 1000 * h;
-      var basis = Math.max(bw, bh);
+      var b = o.voorbeeldBox, basis = Math.max((b[3] - b[1]) / 1000 * w, (b[2] - b[0]) / 1000 * h);
       lang = [basis * 0.88, basis, basis * 1.13];
     } else {
-      var L0 = Math.max(w, h);
-      lang = [0.04, 0.055, 0.075, 0.1, 0.135].map(function (f) { return L0 * f; });
+      var fr = [0.04, 0.055, 0.075, 0.1, 0.135];
+      if (o.raster >= 7) fr.unshift(0.03);
+      if (o.raster >= 11) fr.unshift(0.022);
+      lang = fr.map(function (f2) { return Math.max(w, h) * f2; });
     }
     // draaiingen: bouwstenen zien er na 180 graden (bijna) hetzelfde uit, dus 0..150 in stappen van 30
     var hoeken = o.draaien ? [0, 30, 60, 90, 120, 150] : [0];
     if (o.draaien && o.asymmetrisch) hoeken = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
     var basisHoek = o.hoek || 0;
     hoeken = hoeken.map(function (g) { return (g + basisHoek) % 360; });
-
-    // 1) grof: halve resolutie, stap 2, beste score per positie bijhouden
-    var best = new Float32Array(half.w * half.h).fill(-1), bestI = new Int16Array(half.w * half.h).fill(-1), combis = [];
+    var combis = [];
     hoeken.forEach(function (g) { lang.forEach(function (Lx) { combis.push({ g: g, L: Lx }); }); });
-    var i = 0;
-    var gestopt = false, tGrof0 = performance.now(), tGrof = 0, tFijn0 = 0;
-    function grof() {
-      if (i >= combis.length) return Promise.resolve();
-      if (o.stopNa && performance.now() - t0 > o.stopNa) { gestopt = true; return Promise.resolve(); }
-      var cb = combis[i], Lh = cb.L / 2;
-      var bwT = asp >= 1 ? Lh : Lh * asp, bhT = asp >= 1 ? Lh / asp : Lh;
-      if (Math.min(bwT, bhT) >= 3) {
-        var sj = sjabloon(vb, bwT * pf, bhT * pf, cb.g, 200);
-        var mx = Math.ceil(sj.W / 2), my = Math.ceil(sj.H / 2);
-        for (var y = my; y < half.h - my; y += 2) for (var x = mx; x < half.w - mx; x += 2) {
-          var r = nccOp(half.E, half.w, half.h, sj, x, y), p = y * half.w + x;
-          if (r > best[p]) { best[p] = r; bestI[p] = i; }
-        }
-      }
-      i++;
-      return (i % 3 === 0 ? pauze() : Promise.resolve()).then(grof);
+    return { img: img, w: w, h: h, vb: vb, asp: asp, pf: pf, lang: lang, hoeken: hoeken, combis: combis };
+  }
+  // Schatting van het rekenwerk (voor de tijdschatting bij de schuif)
+  function rekenwerk(W, H, detail, aantalCombis) {
+    var m = werkMaat(W, H, detail);
+    return (m.w / 4) * (m.h / 4) * aantalCombis * 200 + m.w * m.h * 60;
+  }
+  // b) grove ronde voor één combinatie, op een strook rijen (deel van aantal) van het halve beeld
+  function grofCombi(P, ci, best, bestI, deel, aantal) {
+    var half = P.img.half, cb = P.combis[ci], Lh = cb.L / 2, asp = P.asp;
+    var bwT = asp >= 1 ? Lh : Lh * asp, bhT = asp >= 1 ? Lh / asp : Lh;
+    if (Math.min(bwT, bhT) < 3) return;
+    var sj = sjabloon(P.vb, bwT * P.pf, bhT * P.pf, cb.g, 200);
+    var mx = Math.ceil(sj.W / 2), my = Math.ceil(sj.H / 2);
+    var ys = Math.floor(half.h * (deel || 0) / (aantal || 1)), ye = Math.floor(half.h * ((deel || 0) + 1) / (aantal || 1));
+    var y0 = my + Math.ceil(Math.max(0, ys - my) / 2) * 2;
+    for (var y = y0; y < Math.min(ye, half.h - my); y += 2) for (var x = mx; x < half.w - mx; x += 2) {
+      var r = nccOp(half.E, half.w, half.h, sj, x, y), p = y * half.w + x;
+      if (r > best[p]) { best[p] = r; bestI[p] = ci; }
     }
-
-    return grof().then(function () {
-      tGrof = performance.now() - tGrof0; tFijn0 = performance.now();
-      // pieken zoeken (niet-maximum onderdrukking)
-      var pieken = [];
-      for (var p = 0; p < best.length; p++) if (best[p] > 0.15) pieken.push(p);
-      pieken.sort(function (a, b2) { return best[b2] - best[a]; });
-      var gekozen = [];
-      for (var k = 0; k < pieken.length && gekozen.length < 250; k++) {
-        var q = pieken[k], x = q % half.w, y = (q / half.w) | 0, cb = combis[bestI[q]];
-        var straal = Math.max(3, Math.min(cb.L / 2 / Math.max(asp, 1 / asp), cb.L / 2) * 0.6);
-        var dicht = false;
-        for (var j = 0; j < gekozen.length; j++) { var gk = gekozen[j]; if (Math.abs(gk.x - x) < straal && Math.abs(gk.y - y) < straal) { dicht = true; break; } }
-        if (!dicht) gekozen.push({ x: x, y: y, cb: cb, r: best[q] });
-      }
-      // Vorm eerst, maar kleur helpt kiezen welke plekken we verfijnen (anders valt een goed gekleurde kandidaat al vroeg af).
-      var dl = o.doelLab, wg = dl ? Math.max(0, Math.min(1, o.kleurGewicht == null ? 0.25 : o.kleurGewicht)) : 0;
-      if (wg > 0) {
-        gekozen.forEach(function (g) {
-          var Lh = g.cb.L / 2, kort = Math.min(asp >= 1 ? Lh / asp : Lh, asp >= 1 ? Lh : Lh * asp);
-          var kl = Math.exp(-Math.pow(kleurAfstand(img, g.x * 2, g.y * 2, Math.max(1, kort * 0.5), dl), 2) / (2 * 22 * 22));
-          g.s = Math.min(1, g.r / 0.7) * (1 - wg) + kl * wg;
-        });
-        gekozen.sort(function (a, b2) { return b2.s - a.s; });
-      }
-      gekozen = gekozen.slice(0, 60);
-      return pauze().then(function () { return gekozen; });
-    }).then(function (gekozen) {
-      // 2) verfijnen op volle werkresolutie, rond de grove positie en hoek
-      var kand = gekozen.map(function (g) {
-        var cx0 = g.x * 2, cy0 = g.y * 2, beste = { r: -1 };
-        var hk = o.draaien ? [g.cb.g - 12, g.cb.g, g.cb.g + 12] : [g.cb.g];
-        hk.forEach(function (hoek) {
-          [0.94, 1, 1.06].forEach(function (sc) {
-            var Lx = g.cb.L * sc, bwT = asp >= 1 ? Lx : Lx * asp, bhT = asp >= 1 ? Lx / asp : Lx;
-            var sj = sjabloon(vb, bwT * pf, bhT * pf, hoek, 400);
-            for (var dy = -3; dy <= 3; dy++) for (var dx = -3; dx <= 3; dx++) {
-              var r = nccOp(img.E, w, h, sj, cx0 + dx, cy0 + dy);
-              if (r > beste.r) beste = { r: r, cx: cx0 + dx, cy: cy0 + dy, hoek: hoek, bw: bwT, bh: bhT, W: sj.W, H: sj.H };
-            }
-          });
-        });
-        return beste;
-      }).filter(function (k) { return k.r > 0; });
-
-      // 3) kleur als zachte factor
-      var doel = o.doelLab || null, wc = doel ? Math.max(0, Math.min(1, o.kleurGewicht == null ? 0.25 : o.kleurGewicht)) : 0;
-      kand.forEach(function (k) {
-        k.vorm = Math.max(0, k.r);
-        k.kleur = doel ? Math.exp(-Math.pow(kleurAfstand(img, k.cx, k.cy, Math.max(1, Math.min(k.bw, k.bh) * 0.25), doel), 2) / (2 * 22 * 22)) : null;
-        k.patch = patch(img, k.cx, k.cy, k.bw, k.bh, k.hoek);
+  }
+  // c) pieken kiezen, verfijnen, kleur en patches; geeft {kandidaten, res, info}
+  function afronden(P, best, bestI, o) {
+    var t1 = performance.now(), img = P.img, w = P.w, h = P.h, half = img.half, asp = P.asp, vb = P.vb, combis = P.combis;
+    var pieken = [];
+    for (var p = 0; p < best.length; p++) if (best[p] > 0.15) pieken.push(p);
+    pieken.sort(function (a, b2) { return best[b2] - best[a]; });
+    var gekozen = [];
+    for (var k = 0; k < pieken.length && gekozen.length < 250; k++) {
+      var q = pieken[k], x = q % half.w, y = (q / half.w) | 0, cb = combis[bestI[q]];
+      var straal = Math.max(3, Math.min(cb.L / 2 / Math.max(asp, 1 / asp), cb.L / 2) * 0.6);
+      var dicht = false;
+      for (var j = 0; j < gekozen.length; j++) { var gk = gekozen[j]; if (Math.abs(gk.x - x) < straal && Math.abs(gk.y - y) < straal) { dicht = true; break; } }
+      if (!dicht) gekozen.push({ x: x, y: y, cb: cb, r: best[q] });
+    }
+    // Vorm eerst, maar kleur helpt kiezen welke plekken we verfijnen
+    var dl = o.doelLab, wg = dl ? Math.max(0, Math.min(1, o.kleurGewicht == null ? 0.25 : o.kleurGewicht)) : 0;
+    if (wg > 0) {
+      gekozen.forEach(function (g) {
+        var Lh = g.cb.L / 2, kort = Math.min(asp >= 1 ? Lh / asp : Lh, asp >= 1 ? Lh : Lh * asp);
+        var kl = Math.exp(-Math.pow(kleurAfstand(img, g.x * 2, g.y * 2, Math.max(1, kort * 0.5), dl), 2) / (2 * 22 * 22));
+        g.s = Math.min(1, g.r / 0.7) * (1 - wg) + kl * wg;
       });
-      var refPatch = null;
-      if (o.voorbeeldBox) {
-        var b = o.voorbeeldBox, cx = (b[1] + b[3]) / 2000 * w, cy = (b[0] + b[2]) / 2000 * h;
-        refPatch = patch(img, cx, cy, (b[3] - b[1]) / 1000 * w, (b[2] - b[0]) / 1000 * h, 0);
-      }
-      var res = { img: img, kand: kand, wc: wc, refPatch: refPatch, raster: o.raster || 3 };
-      var uit = rangschik(res, o.negatief || []);
-      uit.ms = performance.now() - t0;
-      uit.info = { werk: w + 'x' + h, schalen: lang.length, hoeken: hoeken.length, combis: combis.length, gedaan: i, pieken: gekozen.length, grofMs: tGrof, fijnMs: performance.now() - tFijn0, gestopt: gestopt };
-      uit.res = res;
+      gekozen.sort(function (a, b2) { return b2.s - a.s; });
+    }
+    gekozen = gekozen.slice(0, 60);
+    // verfijnen op volle werkresolutie, rond de grove positie en hoek
+    var kand = gekozen.map(function (g) {
+      var cx0 = g.x * 2, cy0 = g.y * 2, beste = { r: -1 };
+      var hk = o.draaien ? [g.cb.g - 12, g.cb.g, g.cb.g + 12] : [g.cb.g];
+      hk.forEach(function (hoek) {
+        [0.94, 1, 1.06].forEach(function (sc) {
+          var Lx = g.cb.L * sc, bwT = asp >= 1 ? Lx : Lx * asp, bhT = asp >= 1 ? Lx / asp : Lx;
+          var sj = sjabloon(vb, bwT * P.pf, bhT * P.pf, hoek, 400);
+          for (var dy = -3; dy <= 3; dy++) for (var dx = -3; dx <= 3; dx++) {
+            var r = nccOp(img.E, w, h, sj, cx0 + dx, cy0 + dy);
+            if (r > beste.r) beste = { r: r, cx: cx0 + dx, cy: cy0 + dy, hoek: hoek, bw: bwT, bh: bhT };
+          }
+        });
+      });
+      return beste;
+    }).filter(function (k2) { return k2.r > 0; });
+    var doel = o.doelLab || null, wc = doel ? Math.max(0, Math.min(1, o.kleurGewicht == null ? 0.25 : o.kleurGewicht)) : 0;
+    kand.forEach(function (k2) {
+      k2.vorm = Math.max(0, k2.r);
+      k2.labs = labMonster(img, k2.cx, k2.cy, Math.max(1, Math.min(k2.bw, k2.bh) * 0.25));
+      k2.kleur = doel ? kleurScore(k2.labs, doel) : null;
+      k2.patch = patch(img, k2.cx, k2.cy, k2.bw, k2.bh, k2.hoek);
+    });
+    var refPatch = null;
+    if (o.voorbeeldBox) {
+      var b = o.voorbeeldBox;
+      refPatch = patch(img, (b[1] + b[3]) / 2000 * w, (b[0] + b[2]) / 2000 * h, (b[3] - b[1]) / 1000 * w, (b[2] - b[0]) / 1000 * h, 0);
+    }
+    // res bevat alleen wat de pagina nodig heeft om te herrangschikken (geen grote beelden)
+    var res = { img: { w: w, h: h }, kand: kand, wc: wc, refPatch: refPatch, raster: o.raster || 6 };
+    var uit = rangschik(res, o.negatief || []);
+    uit.res = res;
+    uit.info = { werk: w + 'x' + h, schalen: P.lang.length, hoeken: P.hoeken.length, combis: combis.length, pieken: gekozen.length, fijnMs: performance.now() - t1 };
+    return uit;
+  }
+  // Alles in één keer op de hoofddraad (reserve als Web Workers niet kunnen), met pauzes zodat de pagina blijft reageren
+  function zoek(bron, o) {
+    var t0 = performance.now(), P = voorbereid(bron, o), n = P.img.half.w * P.img.half.h;
+    var best = new Float32Array(n).fill(-1), bestI = new Int16Array(n).fill(-1), i = 0, gestopt = false, tg = performance.now();
+    function stap() {
+      if (i >= P.combis.length) return Promise.resolve();
+      if (o.stopNa && performance.now() - t0 > o.stopNa) { gestopt = true; return Promise.resolve(); }
+      grofCombi(P, i, best, bestI, 0, 1); i++;
+      if (o.voortgang) o.voortgang(i / P.combis.length);
+      return pauze().then(stap);
+    }
+    return stap().then(function () {
+      var grofMs = performance.now() - tg, uit = afronden(P, best, bestI, o);
+      uit.info.grofMs = grofMs; uit.info.gestopt = gestopt; uit.info.gedaan = i; uit.info.werkers = 0;
       return uit;
     });
   }
@@ -304,9 +334,9 @@
   function herkleur(res, doelLab, gewicht) {
     res.wc = doelLab ? Math.max(0, Math.min(1, gewicht)) : 0;
     res.kand.forEach(function (k) {
-      k.kleur = doelLab ? Math.exp(-Math.pow(kleurAfstand(res.img, k.cx, k.cy, Math.max(1, Math.min(k.bw, k.bh) * 0.25), doelLab), 2) / (2 * 22 * 22)) : null;
+      k.kleur = doelLab ? kleurScore(k.labs, doelLab) : null;
     });
   }
 
-  window.BZDetect = { zoek: zoek, herkleur: herkleur, rangschik: rangschik, hex2lab: hex2lab, hoofdkleur: hoofdkleur, kunstVoorbeeld: kunstVoorbeeld };
+  self.BZDetect = { zoek: zoek, voorbereid: voorbereid, grofCombi: grofCombi, afronden: afronden, werkMaat: werkMaat, rekenwerk: rekenwerk, herkleur: herkleur, rangschik: rangschik, hex2lab: hex2lab, hoofdkleur: hoofdkleur, kunstVoorbeeld: kunstVoorbeeld };
 })();

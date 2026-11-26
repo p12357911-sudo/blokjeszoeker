@@ -22,14 +22,25 @@
     <input type="file" id="stapel" accept="image/*">
     <p class="hint" data-t="stapelHint"></p>
     <div id="fotoblok" class="fotoblok" hidden>
-      <div class="fotowrap"><canvas id="foto"></canvas></div>
-      <p id="fotohint" class="hint" data-t="fotoHint"></p>
-      <div class="rij">
-        <span class="label" data-t="raster"></span>
-        <div class="segment" id="raster">
-          <button type="button" data-n="2">2×2</button><button type="button" data-n="3">3×3</button><button type="button" data-n="4">4×4</button><button type="button" data-n="5">5×5</button>
+      <div class="kijkbalk">
+        <div class="segment" id="modus">
+          <button type="button" data-m="kijk" class="aan" data-t="modusKijk"></button><button type="button" data-m="wijs" data-t="modusWijs"></button>
+        </div>
+        <div class="zoomknoppen">
+          <button type="button" id="zoomUit" class="knop3" aria-label="-">−</button>
+          <b id="zoomwaarde" class="klein">100%</b>
+          <button type="button" id="zoomIn" class="knop3" aria-label="+">+</button>
+          <button type="button" id="zoomReset" class="knop3" data-t="passend"></button>
         </div>
       </div>
+      <div class="fotowrap"><canvas id="foto"></canvas></div>
+      <p id="fotohint" class="hint" data-t="fotoHint"></p>
+      <div class="rij schuifrij">
+        <span class="label" data-t="raster"></span>
+        <input type="range" id="raster" min="2" max="16" step="1" value="6" aria-label="raster">
+        <b id="rasterwaarde" class="klein">6×6</b>
+      </div>
+      <p id="schatting" class="klein schatting"></p>
       <p class="hint" data-t="rasterHint"></p>
     </div>
   </section>
@@ -45,7 +56,12 @@
       </div>
       <div id="refeditorblok" hidden>
         <p class="hint sterk" data-t="kaderHint"></p>
-        <canvas id="refeditor"></canvas>
+        <div class="fotowrap"><canvas id="refeditor"></canvas></div>
+        <div class="zoomknoppen">
+          <button type="button" id="edUit" class="knop3" aria-label="-">−</button>
+          <button type="button" id="edIn" class="knop3" aria-label="+">+</button>
+          <button type="button" id="edReset" class="knop3" data-t="passend"></button>
+        </div>
       </div>
       <div id="refblok" class="refblok" hidden>
         <canvas id="refcanvas" width="160" height="160"></canvas>
@@ -115,6 +131,7 @@
 </main>
 <footer class="voet" data-t="voet"></footer>
 <script src="detect.js"></script>
+<script src="kijker.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

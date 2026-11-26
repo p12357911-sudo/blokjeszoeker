@@ -18,7 +18,7 @@ input[type=text] { width: 100%; font: 17px Arial, sans-serif; padding: 11px; bor
 input[type=text]:focus { outline: none; border-color: #003A5C; }
 .fotoblok { margin-top: 12px; }
 .fotowrap { position: relative; }
-#foto { width: 100%; height: auto; display: block; border-radius: 8px; background: #ddd; touch-action: none; cursor: crosshair; }
+#foto, #refeditor { display: block; border-radius: 8px; background: #ddd; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
 .rij { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .rij .label { margin: 0; }
 .segment { display: inline-flex; border: 2px solid #003A5C; border-radius: 8px; overflow: hidden; }
@@ -41,7 +41,7 @@ input[type=text]:focus { outline: none; border-color: #003A5C; }
 .draairij input { flex: 1; min-width: 60px; }
 .vink { display: flex; align-items: center; gap: 6px; }
 .vink input { width: 20px; height: 20px; }
-#refeditor { width: 100%; height: auto; display: block; border-radius: 8px; margin-top: 6px; touch-action: none; cursor: crosshair; background: #ddd; }
+#refeditor { cursor: crosshair; margin-top: 6px; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
 .chip { display: flex; flex-direction: column; align-items: center; gap: 2px; font: 14px Arial, sans-serif; color: #111111; background: #fff; border: 2px solid #c5ced6; border-radius: 10px; padding: 6px 8px; cursor: pointer; min-width: 58px; }
 .chip.aan { border-color: #003A5C; background: #e8f1f7; font-weight: bold; }
@@ -87,3 +87,11 @@ input[type=text]:focus { outline: none; border-color: #003A5C; }
 }
 
 [hidden] { display: none !important; }
+
+.kijkbalk { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin: 8px 0; }
+.kijkbalk .segment button { padding: 10px 12px; }
+.zoomknoppen { display: flex; gap: 6px; align-items: center; margin-top: 6px; }
+.zoomknoppen .knop3 { min-width: 44px; min-height: 40px; font-size: 18px; }
+#zoomReset, #edReset { font-size: 14px; }
+.schatting { color: #555; margin-top: 2px; }
+.fotowrap { width: 100%; }
