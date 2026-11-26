@@ -812,7 +812,7 @@
       .then(function (x) {
         clearInterval(klokAI); S.ai.bezig = false;
         var j = x.j || {}; if (j.over_vandaag != null) S.ai.over = j.over_vandaag;
-        if (x.st !== 200) { $('aistatus').textContent = x.st === 429 ? t('aiOp') : t('aiDruk'); aiKnopTekst(); return; }
+        if (x.st !== 200) { $('aistatus').textContent = x.st === 429 ? t('aiOp') : (j.fout === 'geen_toegang' || j.fout === 'uit') ? t('aiNiet') : t('aiDruk'); aiKnopTekst(); return; }
         // AI-boxen omrekenen naar fotocoördinaten
         var boxen = [];
         j.boxen.forEach(function (b) {
