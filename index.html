@@ -16,7 +16,6 @@
 </header>
 <main>
   <p class="intro" data-t="intro">Maak een foto van de berg, zeg wat je zoekt, en de Blokjeszoeker wijst het aan. Voor bouwsteentjes zoals LEGO® en andere kleine stukjes.</p>
-  <p id="demobalk" class="demobalk" hidden data-t="demo">DEMO-modus: er is nog geen sleutel ingesteld, dus de resultaten zijn nep. Zo kun je de pagina testen.</p>
 
   <form id="zoekform" novalidate>
     <label class="veld">
@@ -33,7 +32,7 @@
       <input type="file" id="voorbeeld" accept="image/*">
     </label>
     <button type="submit" id="zoekknop" class="zoekknop" data-t="zoek">Zoek</button>
-    <p class="teller" data-t="later">Gratis zoekacties per dag en extra zoekacties kopen komen later.</p>
+    <p id="teller" class="teller" aria-live="polite"></p>
   </form>
 
   <section id="resultaat" class="resultaat" hidden aria-live="polite">
@@ -45,27 +44,9 @@
 
   <p id="melding" class="melding" hidden role="alert"></p>
 
-  <details class="instellingen" id="instellingen">
-    <summary data-t="instTitel">Instellingen</summary>
-    <label class="veld">
-      <span class="veldnaam" data-t="sleutel">Eigen Gemini API-sleutel</span>
-      <input type="password" id="sleutel" autocomplete="off" spellcheck="false" data-tp="sleutelPh" placeholder="plak hier je sleutel">
-    </label>
-    <label class="veld">
-      <span class="veldnaam" data-t="model">Model</span>
-      <input type="text" id="model" autocomplete="off" spellcheck="false" value="gemini-3.8-flash">
-    </label>
-    <div class="knoppen">
-      <button type="button" id="bewaar" class="knop2 vol" data-t="bewaar">Bewaar</button>
-      <button type="button" id="wis" class="knop2" data-t="wis">Wis sleutel</button>
-    </div>
-    <p id="sleutelstatus" class="sleutelstatus" aria-live="polite"></p>
-    <p class="waarschuwing" data-t="waarschuwing">De sleutel blijft alleen in deze browser (op dit apparaat) en gaat alleen naar Google. Stel bij Google een budgetlimiet in, gebruik dit niet op een gedeelde computer en wis de sleutel als je klaar bent. Zonder sleutel werkt de site in DEMO-modus.</p>
-  </details>
-
   <details class="privacy">
     <summary data-t="privTitel">Privacy</summary>
-    <p data-t="priv">Deze site heeft geen eigen server en bewaart je foto's niet. De foto wordt in je browser verkleind en alleen naar de AI van Google (Gemini) gestuurd, met je eigen sleutel. In DEMO-modus verlaat de foto je apparaat niet. Fotografeer liever geen gezichten.</p>
+    <p data-t="priv">Je foto's worden niet bewaard. De foto wordt in je browser verkleind en via onze server één keer naar de AI van Google (Gemini) gestuurd om te zoeken. Daarna wordt hij niet bewaard, niet door ons en (bij betaald gebruik) niet voor training door Google. Om misbruik te voorkomen tellen we per dag het aantal zoekacties per onherkenbaar gemaakt IP-adres. Fotografeer liever geen gezichten.</p>
   </details>
 </main>
 <footer class="voet" data-t="voet">Blokjeszoeker is niet verbonden aan de LEGO Group. LEGO® is een merk van de LEGO Group.</footer>
