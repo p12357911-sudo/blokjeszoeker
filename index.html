@@ -108,13 +108,17 @@
   <section id="resultaat" class="kaart" hidden>
     <h2 data-t="resultaat"></h2>
     <p class="hint" data-t="resHint"></p>
-    <div class="loepblok">
-      <canvas id="loep" width="360" height="360"></canvas>
-      <div class="loepknoppen">
-        <button type="button" class="knop2 vol" data-actie="hem" data-t="hem"></button>
-        <button type="button" class="knop2" data-actie="lijkt" data-t="lijkt"></button>
-        <button type="button" class="knop2" data-actie="niet" data-t="niet"></button>
-        <label class="klein zoomrij"><span data-t="zoom"></span> <input type="range" id="zoom" min="1" max="6" step="1" value="3"></label>
+    <div class="resview">
+      <div class="resfotowrap"><canvas id="resfoto"></canvas></div>
+      <div class="loepblok">
+        <canvas id="loep" width="360" height="360"></canvas>
+        <div class="loepknoppen">
+          <label class="klein zoomrij"><span data-t="zoom"></span> <input type="range" id="zoom" min="1" max="8" step="1" value="3"></label>
+          <button type="button" class="knop2 vol" data-actie="hem" data-t="hem"></button>
+          <button type="button" class="knop2" data-actie="lijkt" data-t="lijkt"></button>
+          <button type="button" class="knop2" data-actie="niet" data-t="niet"></button>
+          <button type="button" class="knop2" id="alsvoorbeeld" data-t="alsVoorbeeld"></button>
+        </div>
       </div>
     </div>
     <ol id="lijst" class="lijst"></ol>

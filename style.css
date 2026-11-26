@@ -58,7 +58,7 @@ input[type=text]:focus { outline: none; border-color: #003A5C; }
 .voortgang { text-align: center; font-weight: bold; margin: 10px 0 0; min-height: 1.2em; }
 .teller { text-align: center; font-size: 14px; margin: 4px 0 0; min-height: 1em; }
 .melding { margin: 12px 0; background: #fdecea; border: 2px solid #b00020; border-radius: 8px; padding: 10px 12px; }
-.loepblok { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+.loepblok { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; margin-top: 10px; }
 #loep { width: 180px; height: 180px; border-radius: 8px; border: 3px solid #003A5C; background: #ddd; }
 .loepknoppen { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 150px; }
 .zoomrij { display: flex; align-items: center; gap: 6px; }
@@ -83,7 +83,9 @@ input[type=text]:focus { outline: none; border-color: #003A5C; }
 @media (min-width: 900px) {
   main { max-width: 1100px; display: grid; grid-template-columns: 1fr 1fr; column-gap: 18px; align-items: start; }
   main > .intro, main > .zoekknop, main > .voortgang, main > .teller, main > .melding, main > .tijdblok, main > .privacy, main > #resultaat { grid-column: 1 / -1; }
-  #loep { width: 260px; height: 260px; }
+  #loep { width: 240px; height: 240px; }
+  .resview { display: grid; grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap: 16px; align-items: start; }
+  .resview .loepblok { margin-top: 0; flex-direction: column; }
 }
 
 [hidden] { display: none !important; }
@@ -95,3 +97,6 @@ input[type=text]:focus { outline: none; border-color: #003A5C; }
 #zoomReset, #edReset { font-size: 14px; }
 .schatting { color: #555; margin-top: 2px; }
 .fotowrap { width: 100%; }
+
+#resfoto { display: block; width: 100%; height: auto; border-radius: 8px; background: #ddd; touch-action: none; cursor: move; user-select: none; -webkit-user-select: none; }
+.resfotowrap { width: 100%; }

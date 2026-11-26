@@ -28,7 +28,8 @@
       zoek: 'Zoek', bezig: 'Bezig…',
       nogBezig: function (s) { return 'Nog bezig… ' + s; },
       resultaat: 'Resultaat',
-      resHint: 'Sleep in het vergrootglas of tik op de foto om rond te kijken. Zeg bij een blokje of het klopt; de lijst past zich meteen aan.',
+      resHint: 'Sleep het kader over de foto (of tik ergens). Het vergrootglas laat zien wat erin zit. Met de knoppen zeg je of dat blokje het is; de lijst past zich meteen aan.',
+      alsVoorbeeld: '＋ Gebruik als voorbeeld', geenKandHier: 'Hier ligt geen kandidaat. Staat het goede blokje in het kader? Kies dan “Dit is hem!” of “Gebruik als voorbeeld”.',
       hem: '✓ Dit is hem!', lijkt: '≈ Lijkt erop, niet hem', niet: '✗ Niet deze', zoom: 'Zoom',
       gevonden: 'Gevonden! Veel bouwplezier.',
       meer: function (n) { return 'Nog ' + n + ' kandidaten achter de hand: zeg “niet deze” om de volgende te zien.'; },
@@ -69,7 +70,8 @@
       zoek: 'Search', bezig: 'Working…',
       nogBezig: function (s) { return 'Working… ' + s; },
       resultaat: 'Result',
-      resHint: 'Drag inside the magnifier or tap the photo to look around. Tell us whether a piece is right; the list updates immediately.',
+      resHint: 'Drag the box over the photo (or tap anywhere). The magnifier shows what is inside. Use the buttons to say whether that piece is the one; the list updates immediately.',
+      alsVoorbeeld: '＋ Use as example', geenKandHier: 'There is no candidate here. Is the right piece inside the box? Then choose “This is it!” or “Use as example”.',
       hem: '✓ This is it!', lijkt: '≈ Looks like it, but no', niet: '✗ Not this one', zoom: 'Zoom',
       gevonden: 'Found it! Happy building.',
       meer: function (n) { return n + ' more candidates in reserve: say “not this one” to see the next.'; },
@@ -298,7 +300,33 @@
     }
     tekenLoep();
   }
+  // Resultaatfoto: hele foto staat vast, het kader (vizier) is versleepbaar
+  function tekenResFoto() {
+    var c = $('resfoto'); if (!S.bron || $('resultaat').hidden) return;
+    var cw = c.parentElement.clientWidth; if (!cw) return;
+    var W = S.bron.width, H = S.bron.height, dpr = Math.min(3, window.devicePixelRatio || 1);
+    var ch = Math.round(cw * H / W);
+    if (c.width !== Math.round(cw * dpr) || c.height !== Math.round(ch * dpr)) { c.width = Math.round(cw * dpr); c.height = Math.round(ch * dpr); c.style.height = ch + 'px'; }
+    var ctx = c.getContext('2d'), s = c.width / W, px = 1 / s;
+    ctx.setTransform(s, 0, 0, s, 0, 0); ctx.imageSmoothingQuality = 'high'; ctx.drawImage(S.bron, 0, 0);
+    toonLijst().forEach(function (k, idx) {
+      var b = k.det.box, x = b[1] / 1000 * W, y = b[0] / 1000 * H, w = (b[3] - b[1]) / 1000 * W, h = (b[2] - b[0]) / 1000 * H;
+      var kleur = k.status === 'hem' ? '#00c853' : KLEUREN_KADER[idx];
+      ctx.lineWidth = 4 * dpr * px; ctx.strokeStyle = '#fff'; ctx.strokeRect(x - 2 * px, y - 2 * px, w + 4 * px, h + 4 * px);
+      ctx.lineWidth = 2.5 * dpr * px; ctx.strokeStyle = kleur; ctx.strokeRect(x - 2 * px, y - 2 * px, w + 4 * px, h + 4 * px);
+    });
+    if (S.vizier) {
+      var v = S.vizier, vx = v[1] / 1000 * W, vy = v[0] / 1000 * H, vw = (v[3] - v[1]) / 1000 * W, vh = (v[2] - v[0]) / 1000 * H;
+      ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.rect(vx, vy, vw, vh); ctx.fill('evenodd');
+      ctx.lineWidth = 5 * dpr * px; ctx.strokeStyle = '#111'; ctx.strokeRect(vx, vy, vw, vh);
+      ctx.lineWidth = 2.5 * dpr * px; ctx.strokeStyle = '#fff'; ctx.strokeRect(vx, vy, vw, vh);
+      // greepje in het midden: laat zien dat je het kader kunt slepen
+      ctx.beginPath(); ctx.arc(vx + vw / 2, vy + vh / 2, 7 * dpr * px, 0, 2 * Math.PI); ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fill();
+      ctx.lineWidth = 2 * dpr * px; ctx.strokeStyle = '#003A5C'; ctx.stroke();
+    }
+  }
   function tekenLoep() {
+    tekenResFoto();
     var c = $('loep'), ctx = c.getContext('2d');
     ctx.fillStyle = '#ddd'; ctx.fillRect(0, 0, c.width, c.height);
     if (!S.bron || !S.vizier) return;
@@ -315,7 +343,7 @@
     ctx.moveTo(c.width / 2, c.height / 2 - 10); ctx.lineTo(c.width / 2, c.height / 2 + 10); ctx.stroke();
   }
   function zetVizier(cy, cx) {
-    var W = S.bron.width, H = S.bron.height, zijde = Math.min(W, H) / (S.zoom + 0.5);
+    var W = S.bron.width, H = S.bron.height, zijde = Math.min(W, H) / (S.zoom * 0.75 + 0.5);
     var hh = zijde / H * 500, hw = zijde / W * 500;
     cy = klem(cy, hh, 1000 - hh); cx = klem(cx, hw, 1000 - hw);
     S.vizier = [cy - hh, cx - hw, cy + hh, cx + hw]; teken();
@@ -378,6 +406,31 @@
     $('edIn').addEventListener('click', function () { KE.zoomOm(1.6); });
     $('edUit').addEventListener('click', function () { KE.zoomOm(1 / 1.6); });
     $('edReset').addEventListener('click', function () { KE.passend(); });
+
+    // resultaatfoto: kader slepen (muis en aanraken); tik/klik buiten het kader zet het kader daar neer
+    var rf = $('resfoto'), rs = null;
+    function rfPunt(e) { var r = rf.getBoundingClientRect(); return [klem((e.clientY - r.top) / r.height * 1000, 0, 1000), klem((e.clientX - r.left) / r.width * 1000, 0, 1000)]; }
+    rf.addEventListener('pointerdown', function (e) {
+      if (!S.bron || !S.vizier) return; e.preventDefault(); rf.setPointerCapture(e.pointerId);
+      var p = rfPunt(e), v = S.vizier, m = vizierMidden();
+      var binnen = p[0] > v[0] && p[0] < v[2] && p[1] > v[1] && p[1] < v[3];
+      rs = { id: e.pointerId, dy: binnen ? m[0] - p[0] : 0, dx: binnen ? m[1] - p[1] : 0 };
+      zetVizier(p[0] + rs.dy, p[1] + rs.dx);
+    });
+    rf.addEventListener('pointermove', function (e) { if (!rs || e.pointerId !== rs.id) return; var p = rfPunt(e); zetVizier(p[0] + rs.dy, p[1] + rs.dx); });
+    function rfLos(e) { if (rs && e.pointerId === rs.id) rs = null; }
+    rf.addEventListener('pointerup', rfLos); rf.addEventListener('pointercancel', rfLos);
+    window.addEventListener('resize', function () { tekenResFoto(); });
+    $('alsvoorbeeld').addEventListener('click', function () {
+      if (!S.vizier || S.bezig) return;
+      // middelste derde van het kader als nieuw voorbeeld; daarna kun je het in de foto bijstellen
+      var v = S.vizier, hh = (v[2] - v[0]) / 6, hw = (v[3] - v[1]) / 6, m = vizierMidden();
+      var box = [m[0] - hh, m[1] - hw, m[0] + hh, m[1] + hw];
+      S.ref = { canvas: snij(S.bron, box, 24, 400), zoek: snijMetMarge(S.bron, box), box: box, bron: 'foto' };
+      $('refeditorblok').hidden = true; zetHoek(0);
+      zetModus('wijs'); KF.centreerOp((box[1] + box[3]) / 2000 * S.bron.width, (box[0] + box[2]) / 2000 * S.bron.height, 4);
+      $('fotoblok').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
 
     // slepen in de loep verschuift het vizier
     var loep = $('loep'), start = null; loep.style.touchAction = 'none';
@@ -504,7 +557,7 @@
     S.gekozen = k;
     var b = k.det.box, W = S.bron.width, H = S.bron.height;
     var nodig = Math.max((b[2] - b[0]) / 1000 * H, (b[3] - b[1]) / 1000 * W) * 3.2;
-    S.zoom = klem(Math.round(Math.min(W, H) / nodig - 0.5), 1, 6); $('zoom').value = S.zoom;
+    S.zoom = klem(Math.round((Math.min(W, H) / nodig - 0.5) / 0.75), 1, 8); $('zoom').value = S.zoom;
     // als de hoofdfoto is ingezoomd: meeschuiven naar dit blokje
     if (KF && KF.zoomFactor() > 1.05) { KF.ox = KF.cw / 2 - (b[1] + b[3]) / 2000 * W * KF.s; KF.oy = KF.ch / 2 - (b[0] + b[2]) / 2000 * H * KF.s; KF._klem(); }
     zetVizier((b[0] + b[2]) / 2, (b[1] + b[3]) / 2); tekenLijst();
@@ -561,8 +614,9 @@
         S.kand.push(k);
       }
     }
+    if (!k) { melding(t('geenKandHier')); return; }
+    melding('');
     if (actie === 'hem') {
-      if (!k) return;
       S.kand.forEach(function (x) { if (x.status === 'hem') x.status = 'open'; });
       k.status = 'hem'; $('gevonden').hidden = false; kies(k); teken(); return;
     }
