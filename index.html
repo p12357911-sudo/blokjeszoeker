@@ -12,45 +12,109 @@
 <body>
 <header class="kop">
   <h1>Blokjeszoeker</h1>
-  <button type="button" id="taalknop" class="taalknop" aria-label="Switch to English">EN</button>
+  <button type="button" id="taalknop" class="taalknop">EN</button>
 </header>
 <main>
-  <p class="intro" data-t="intro">Maak een foto van de berg, zeg wat je zoekt, en de Blokjeszoeker wijst het aan. Voor bouwsteentjes zoals LEGO® en andere kleine stukjes.</p>
+  <p class="intro" data-t="intro"></p>
 
-  <form id="zoekform" novalidate>
-    <label class="veld">
-      <span class="veldnaam"><span data-t="stapel">1. Foto van de berg</span> <span class="verplicht">*</span></span>
-      <input type="file" id="stapel" accept="image/*" required>
-      <span class="hint" data-t="stapelHint">Leg de stukjes zo plat mogelijk uit, met goed licht.</span>
-    </label>
-    <label class="veld">
-      <span class="veldnaam" data-t="wat">2. Wat zoek je?</span>
-      <input type="text" id="wat" maxlength="120" autocomplete="off" data-tp="watPh" placeholder="bijv. rood tweetje">
-    </label>
-    <label class="veld">
-      <span class="veldnaam" data-t="voorbeeld">3. Foto van wat je zoekt (mag ook niet)</span>
-      <input type="file" id="voorbeeld" accept="image/*">
-    </label>
-    <button type="submit" id="zoekknop" class="zoekknop" data-t="zoek">Zoek</button>
-    <p id="teller" class="teller" aria-live="polite"></p>
-  </form>
-
-  <section id="resultaat" class="resultaat" hidden aria-live="polite">
-    <h2 data-t="resultaat">Resultaat</h2>
-    <div class="canvaswrap"><canvas id="doek"></canvas></div>
-    <ol id="lijst" class="lijst"></ol>
-    <p id="uitleg" class="uitleg"></p>
+  <section class="kaart">
+    <h2 data-t="stap1"></h2>
+    <input type="file" id="stapel" accept="image/*">
+    <p class="hint" data-t="stapelHint"></p>
+    <div id="fotoblok" class="fotoblok" hidden>
+      <div class="fotowrap"><canvas id="foto"></canvas></div>
+      <p id="fotohint" class="hint" data-t="fotoHint"></p>
+      <div class="rij">
+        <span class="label" data-t="raster"></span>
+        <div class="segment" id="raster">
+          <button type="button" data-n="2">2×2</button><button type="button" data-n="3">3×3</button><button type="button" data-n="4">4×4</button><button type="button" data-n="5">5×5</button>
+        </div>
+      </div>
+      <p class="hint" data-t="rasterHint"></p>
+    </div>
   </section>
 
+  <section class="kaart">
+    <h2 data-t="stap2"></h2>
+    <div class="aanrader">
+      <p class="sterk" data-t="refTitel"></p>
+      <p class="hint" data-t="refUitleg"></p>
+      <div class="rij knoppen">
+        <label class="knop2 bestand"><span data-t="refFoto"></span><input type="file" id="voorbeeld" accept="image/*"></label>
+        <button type="button" id="wijsknop" class="knop2" data-t="wijsAan" disabled></button>
+      </div>
+      <div id="refeditorblok" hidden>
+        <p class="hint sterk" data-t="kaderHint"></p>
+        <canvas id="refeditor"></canvas>
+      </div>
+      <div id="refblok" class="refblok" hidden>
+        <canvas id="refcanvas" width="160" height="160"></canvas>
+        <div class="refrechts">
+          <span id="reftekst" class="klein"></span>
+          <div class="rij draairij">
+            <button type="button" id="draaiL" class="knop3" aria-label="-90">↺ 90°</button>
+            <input type="range" id="hoek" min="0" max="359" step="1" value="0" aria-label="hoek">
+            <button type="button" id="draaiR" class="knop3" aria-label="+90">↻ 90°</button>
+          </div>
+          <span class="klein"><span data-t="hoekTxt"></span> <b id="hoekwaarde">0°</b></span>
+          <label class="klein vink"><input type="checkbox" id="draaien" checked> <span data-t="draaienTxt"></span></label>
+          <button type="button" id="refweg" class="knop3" data-t="weg"></button>
+        </div>
+      </div>
+    </div>
+
+    <p class="label" data-t="vormTitel"></p>
+    <div class="chips" id="maten"></div>
+    <div class="chips" id="soorten"></div>
+
+    <p class="label" data-t="kleurTitel"></p>
+    <div class="kleuren" id="kleuren"></div>
+    <div class="rij schuifrij">
+      <span class="klein" data-t="donker"></span>
+      <input type="range" id="licht" min="-2" max="2" step="1" value="0" aria-label="licht">
+      <span class="klein" data-t="licht"></span>
+      <span id="kleurproef" class="kleurproef"></span>
+    </div>
+    <p class="hint" data-t="lichtHint"></p>
+    <div class="rij schuifrij">
+      <span class="klein" data-t="kleurGewicht"></span>
+      <input type="range" id="kleurgewicht" min="0" max="100" step="5" value="25" aria-label="kleurgewicht">
+      <b id="kleurgewichtwaarde" class="klein">25%</b>
+    </div>
+
+    <p class="samenvatting"><span data-t="jeZoekt"></span> <b id="samenvatting"></b></p>
+  </section>
+
+  <button type="button" id="zoekknop" class="zoekknop" data-t="zoek"></button>
+  <p id="voortgang" class="voortgang" aria-live="polite"></p>
   <p id="melding" class="melding" hidden role="alert"></p>
+
+  <section id="resultaat" class="kaart" hidden>
+    <h2 data-t="resultaat"></h2>
+    <p class="hint" data-t="resHint"></p>
+    <div class="loepblok">
+      <canvas id="loep" width="360" height="360"></canvas>
+      <div class="loepknoppen">
+        <button type="button" class="knop2 vol" data-actie="hem" data-t="hem"></button>
+        <button type="button" class="knop2" data-actie="lijkt" data-t="lijkt"></button>
+        <button type="button" class="knop2" data-actie="niet" data-t="niet"></button>
+        <label class="klein zoomrij"><span data-t="zoom"></span> <input type="range" id="zoom" min="1" max="6" step="1" value="3"></label>
+      </div>
+    </div>
+    <ol id="lijst" class="lijst"></ol>
+    <p id="uitleg" class="uitleg"></p>
+    <p id="gevonden" class="gevonden" hidden data-t="gevonden"></p>
+  </section>
+
   <div id="tijdblok" class="tijdblok" hidden><p id="zoektijd" class="zoektijd"></p><p id="tijddetail" class="tijddetail"></p></div>
 
   <details class="privacy">
-    <summary data-t="privTitel">Privacy</summary>
-    <p data-t="priv">Je foto's worden niet bewaard. De foto wordt in je browser verkleind en via onze server één keer naar de AI van Google (Gemini) gestuurd om te zoeken. Daarna wordt hij niet bewaard, niet door ons en (bij betaald gebruik) niet voor training door Google. Om misbruik te voorkomen tellen we per dag het aantal zoekacties per onherkenbaar gemaakt IP-adres. Fotografeer liever geen gezichten.</p>
+    <summary data-t="privTitel"></summary>
+    <p data-t="priv"></p>
   </details>
 </main>
-<footer class="voet" data-t="voet">Blokjeszoeker is niet verbonden aan de LEGO Group. LEGO® is een merk van de LEGO Group.</footer>
+<footer class="voet" data-t="voet"></footer>
+<script src="detect.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
