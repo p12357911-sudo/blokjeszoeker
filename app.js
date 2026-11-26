@@ -54,6 +54,10 @@
       aiUitslag: function (b, tw, n, v) { return 'AI-oordeel: ' + b + ' bevestigd, ' + tw + ' twijfel, ' + n + ' nee' + (v ? ', ' + v + ' nieuwe AI-vondst(en) (paars)' : '') + '.'; },
       aiGeen: 'AI vond geen exacte match in dit beeld.',
       ai_bevestigd: 'AI: bevestigd', ai_twijfel: 'AI: twijfel', ai_nee: 'AI: nee', aiVondst: 'AI-vondst',
+      slimTxt: 'Slimme herkenning (3D) – experimenteel', slimHint: 'Laat per kandidaat zien op welk onderdeel het lijkt (3D-modellen van LDraw), welke kant boven ligt en hoeveel noppen te zien zijn. Verandert de volgorde niet. Werkt in je browser; laadt eenmalig ± 4 MB. 3D-modellen: LDraw.org (CC BY 4.0).',
+      slimBezig: 'Slimme herkenning (3D) bezig…', slimFout: 'Slimme herkenning (3D) lukte niet; gewone uitslag getoond.',
+      zijde_boven: 'bovenkant', zijde_onder: 'onderkant', 'zijde_?': 'geen noppen gezien', noppen: 'noppen', lijkt3d: 'lijkt op',
+      slimRegel: function (s) { return 'Slimme herkenning (3D): ' + s.ms + ' voor ' + s.n + ' kandidaten' + (s.laad ? ' · model laden ' + s.laad : '') + ' · ' + s.backend + (s.doel ? ' · doel: ' + s.doel : ''); },
       voet: 'Blokjeszoeker is niet verbonden aan de LEGO Group. LEGO® is een merk van de LEGO Group.'
     },
     en: {
@@ -105,6 +109,10 @@
       aiUitslag: function (b, tw, n, v) { return 'AI verdict: ' + b + ' confirmed, ' + tw + ' unsure, ' + n + ' no' + (v ? ', ' + v + ' new AI find(s) (purple)' : '') + '.'; },
       aiGeen: 'AI found no exact match in this image.',
       ai_bevestigd: 'AI: confirmed', ai_twijfel: 'AI: unsure', ai_nee: 'AI: no', aiVondst: 'AI find',
+      slimTxt: 'Smart recognition (3D) – experimental', slimHint: 'Shows per candidate which part it looks like (LDraw 3D models), which side faces up and how many studs are visible. Does not change the order. Runs in your browser; loads ± 4 MB once. 3D models: LDraw.org (CC BY 4.0).',
+      slimBezig: 'Smart recognition (3D) running…', slimFout: 'Smart recognition (3D) failed; showing the normal result.',
+      zijde_boven: 'top', zijde_onder: 'bottom', 'zijde_?': 'no studs seen', noppen: 'studs', lijkt3d: 'looks like',
+      slimRegel: function (s) { return 'Smart recognition (3D): ' + s.ms + ' for ' + s.n + ' candidates' + (s.laad ? ' · model load ' + s.laad : '') + ' · ' + s.backend + (s.doel ? ' · target: ' + s.doel : ''); },
       voet: 'Brick Finder is not affiliated with the LEGO Group. LEGO® is a trademark of the LEGO Group.'
     }
   };
@@ -129,7 +137,7 @@
     bron: null, n: parseInt(localStorage.getItem('bz_raster') || '6', 10), modus: 'kijk',
     maat: null, soort: null, kleur: null, licht: 0, kleurGewicht: 0.25,
     ref: null,      // { canvas: uitsnede, box: [0-1000] als uit de stapel, bron: 'foto'|'bestand', vol: canvas van de losse foto }
-    hoek: 0, draaien: true,
+    hoek: 0, draaien: true, slim: localStorage.getItem('bz_slim') === '1', slimInfo: null,
     res: null, kand: [], negatief: [], vizier: null, gekozen: null, zoom: 3, bezig: false, tijd: null
   };
 
@@ -629,7 +637,8 @@
       var totaal = performance.now() - t0;
       S.tijd = { totaal: totaal, info: uit.info, her: null };
       if (!uit.info.gestopt) localStorage.setItem('bz_snelheid', String(Math.max(1e-7, (totaal - 120) * (uit.info.werkers || 1) / ops)));
-      klaar();
+      S.slimInfo = null;
+      (S.slim ? slimToepassen() : Promise.resolve()).then(klaar, klaar);
       if (uit.info.gestopt) melding(t('gestopt'));
     }, function (e) { console.error(e); melding(t('geen_foto')); klaar(); });
     function klaar() {
@@ -640,6 +649,25 @@
   }
 
 
+  // ---------- Slimme herkenning (3D): optionele tweede laag, alleen in de browser ----------
+  function slimWissen() { if (S.res) S.res.kand.forEach(function (d) { d.drie = null; }); S.slimInfo = null; }
+  function slimToepassen() {
+    if (!S.res || !self.BZHerken) return Promise.resolve();
+    $('voortgang').textContent = t('slimBezig');
+    var eerst = !S.slimGeladen;
+    return BZHerken.laad('').then(function (info) {
+      S.slimGeladen = true;
+      // Alleen informatie per kandidaat (onderdeel, zijde, gelijkenis). De rangorde blijft die van het gewone zoeken:
+      // in de test (stapel-echt.jpg, 21 zoekvragen) maakte meewegen de top-1/top-5 niet beter. Zie NOTITIES.md.
+      var dets = S.kand.filter(function (k) { return !k.aiVondst && !k.handmatig && k.det.box; }).map(function (k) { return k.det; });
+      var sx = S.bron.width / S.res.img.w;
+      var r = BZHerken.beoordeel(S.bron, dets.map(function (d) { return { box: d.box, kort: d.bw ? Math.min(d.bw, d.bh) * sx : null }; }),
+        { doel: BZHerken.doelDeel(S.maat, S.soort), ref: S.ref && !S.maat ? S.ref.zoek : null });
+      S.res.kand.forEach(function (d) { d.drie = null; });
+      dets.forEach(function (d, i) { d.drie = r.kand[i]; });
+      S.slimInfo = { ms: r.ms, n: dets.length, laad: eerst ? info.ms : null, backend: info.backend, doel: r.doel ? BZHerken.DELEN[r.doel].nl + ' (' + r.doel + ')' : null };
+    }).catch(function (e) { console.warn('3D', e); slimWissen(); melding(t('slimFout')); });
+  }
   function toonResultaat() {
     $('resultaat').hidden = false;
     var top = toonLijst();
@@ -666,9 +694,10 @@
       var nr = document.createElement('span'); nr.className = 'nr';
       nr.style.background = k.status === 'hem' ? '#00c853' : KLEUREN_KADER[i]; nr.textContent = k.status === 'hem' ? '✓' : String(i + 1);
       var dc = snij(S.bron, rondom(k.det.box, 2.2, 0.04), 64, 128); dc.style.width = '64px'; dc.style.height = '64px';
-      var d = k.det.det || {};
+      var d = k.det.det || {}, d3 = !k.aiVondst && !k.handmatig ? k.det.drie : null;
       var tx = document.createElement('span'); tx.className = 'tekst';
       tx.textContent = k.aiVondst ? '' : k.handmatig ? t('handmatig') : (k.det.score + '% ' + t('zeker') + ' · ' + t('vorm') + ' ' + Math.round(100 * Math.min(1, k.det.vorm / 0.7)) + '%' + (k.det.kleur != null ? ' · ' + t('kleur') + ' ' + Math.round(100 * k.det.kleur) + '%' : ''));
+      if (d3) { var dr = document.createElement('span'); dr.className = 'drie'; dr.textContent = '3D: ' + t('lijkt3d') + ' ' + d3.naam + ' · ' + t('zijde_' + d3.zijde) + (d3.noppen ? ' · ' + d3.noppen + ' ' + t('noppen') : '') + ' · ' + Math.round(100 * d3.sim) + '%'; tx.appendChild(dr); }
       if (k.ai || k.aiVondst) { var bd = document.createElement('span'); bd.className = 'aibadge ' + (k.aiVondst ? 'vondst' : k.ai); bd.textContent = k.aiVondst ? t('aiVondst') : t('ai_' + k.ai); tx.appendChild(bd); }
       var kn = document.createElement('span'); kn.className = 'knoppies';
       ['hem', 'lijkt', 'niet'].forEach(function (a) {
@@ -739,6 +768,7 @@
     $('zoektijd').textContent = t('zoektijd') + ': ' + sec(T0.totaal) + ' (' + t('inBrowser') + ')';
     var regels = [t('tijdRegel')({ werk: i.werk, hoeken: i.hoeken, schalen: i.schalen, combis: i.combis, grof: sec(i.grofMs), fijn: sec(i.fijnMs), pieken: i.pieken })];
     if (T0.her != null) regels.push(t('herTijd')(sec(T0.her)));
+    if (S.slimInfo && S.slimInfo.ms != null) regels.push(t('slimRegel')({ ms: sec(S.slimInfo.ms), n: S.slimInfo.n, laad: S.slimInfo.laad != null ? sec(S.slimInfo.laad) : null, backend: S.slimInfo.backend, doel: S.slimInfo.doel }));
     $('tijddetail').textContent = regels.join('\n');
     $('tijdblok').hidden = false;
   }
@@ -875,6 +905,12 @@
   $('draaiR').addEventListener('click', function () { zetHoek(S.hoek + 90); });
   $('draaien').addEventListener('change', function () { S.draaien = this.checked; bouwKeuzes(); werkSchattingBij(); });
   $('licht').addEventListener('input', function () { S.licht = parseInt(this.value, 10); bouwKeuzes(); herkleur(); });
+  $('slim').checked = S.slim;
+  $('slim').addEventListener('change', function () {
+    S.slim = this.checked; localStorage.setItem('bz_slim', S.slim ? '1' : '0');
+    if (!S.res || S.bezig) return;
+    (S.slim ? slimToepassen() : Promise.resolve(slimWissen())).then(function () { $('voortgang').textContent = ''; naFeedback(); });
+  });
   $('kleurgewicht').addEventListener('input', function () { S.kleurGewicht = parseInt(this.value, 10) / 100; $('kleurgewichtwaarde').textContent = this.value + '%'; herkleur(); });
   $('raster').addEventListener('input', function () { S.n = parseInt(this.value, 10); localStorage.setItem('bz_raster', S.n); werkSchattingBij(); teken(); });
   $('zoom').addEventListener('input', function () { S.zoom = parseInt(this.value, 10); var m = vizierMidden(); zetVizier(m[0], m[1]); });

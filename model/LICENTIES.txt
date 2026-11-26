@@ -1,0 +1,17 @@
+Slimme herkenning (3D) – gebruikte bestanden en licenties
+
+1. LDraw-onderdelen (renders in lego-inbedding.json)
+   Bron: LDraw.org Parts Library – https://www.ldraw.org
+   Onderdelen: 3005, 3004, 3622, 3010, 3003, 3002, 3001, 3023b, 3022, 3068b, 3039
+   Licentie: Creative Commons Attribution 4.0 (CC BY 4.0) – https://creativecommons.org/licenses/by/4.0/
+   Wij hebben de onderdelen kleurloos weergegeven (25 aanzichten per onderdeel) en daarvan alleen
+   kenmerkvectoren opgeslagen. LDraw™ is een handelsmerk van de Estate of James Jessiman.
+
+2. Beeldnetwerk (model/mobilenet_v2_050/)
+   MobileNetV2 0.50 224, feature vector (TensorFlow Hub / Kaggle Models, Google)
+   Licentie: Apache License 2.0 – https://www.apache.org/licenses/LICENSE-2.0
+
+3. TensorFlow.js 4.22.0 (lib/tf.min.js), Google LLC
+   Licentie: Apache License 2.0 – https://www.apache.org/licenses/LICENSE-2.0
+
+Blokjeszoeker is niet verbonden aan de LEGO Group. LEGO® is een merk van de LEGO Group.

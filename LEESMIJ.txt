@@ -1,0 +1,41 @@
+BLOKJESZOEKER - statische versie (zonder eigen server)
+======================================================
+
+Zo zet je de site gratis online met GitHub Pages:
+
+1. Ga naar https://github.com en log in.
+2. Rechtsboven: + > New repository.
+   - Repository name: blokjeszoeker
+   - Kies Public
+   - Vink niets anders aan
+   - Klik Create repository.
+   (Maak echt een NIEUWE repository; gebruik niet die van je oude site.)
+3. Klik op de pagina die verschijnt op de link "uploading an existing file".
+4. Pak de ZIP eerst uit op je computer. Sleep daarna de BESTANDEN
+   index.html, style.css, detect.js, kijker.js, zoekwerker.js en app.js (niet de map zelf) naar het venster.
+   Klik onderaan Commit changes.
+5. Ga naar Settings (tabblad bovenaan) > Pages (in het menu links).
+   Bij "Build and deployment": Source = Deploy from a branch,
+   Branch = main, map = / (root). Klik Save.
+6. Wacht 1 à 2 minuten en ververs de pagina. Bovenaan staat dan het adres,
+   meestal: https://JOUWGEBRUIKERSNAAM.github.io/blokjeszoeker/
+
+Gebruiken
+- Alles draait in de browser: geen server, geen AI, geen sleutel, geen daglimiet.
+  Foto's verlaten het apparaat niet.
+- Zoeken: foto van de berg kiezen, dan een voorbeeld aanwijzen in de berg
+  (werkt het best) of een foto van het blokje met een kader eromheen, of een
+  standaardblokje kiezen. Op de foto: knijpen/scrollen = zoomen; knop
+  'Blokje aanwijzen' = kader trekken, hoekjes verslepen om bij te stellen.
+- Raster-schuif 2..16: fijner = kleinere stukjes, langer zoeken (schatting staat erbij).
+  Het zoeken loopt in Web Workers (meerdere kernen), de pagina blijft bruikbaar. Kleur telt standaard voor 25% mee (schuif).
+- De Cloudflare Worker (AI) staat nog online maar wordt door deze versie niet
+  gebruikt. AI-vervolgstappen (bijv. Mistral of Gemini) komen later.
+- Bijwerken: in je repository "Add file > Upload files" met de nieuwe bestanden.
+
+Slimme herkenning (3D) – experimenteel (nov. 2026)
+- Vinkje onder de kleurkeuze. Staat standaard uit. Laadt pas bij aanzetten ± 4,7 MB (lib/tf.min.js, model/).
+- Toont per kandidaat: op welk onderdeel het lijkt, welke kant boven ligt, aantal zichtbare noppen, gelijkenis.
+- Verandert de volgorde niet (in de test werd meewegen niet beter). Alles in de browser, geen externe verzoeken.
+- Licenties en bronvermelding: model/LICENTIES.txt (LDraw.org CC BY 4.0, MobileNetV2 en TensorFlow.js Apache 2.0).
+- Nieuwe/aangepaste bestanden: herken.js, lib/tf.min.js, model/*, app.js, index.html, style.css.

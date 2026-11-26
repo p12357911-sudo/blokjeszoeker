@@ -110,3 +110,6 @@ input[type=text]:focus { outline: none; border-color: #003A5C; }
 .aikeuze { gap: 8px; align-items: center; flex-wrap: wrap; }
 .aibadge { display: inline-block; font-size: 12px; font-weight: bold; border-radius: 10px; padding: 1px 7px; margin-left: 4px; color: #fff; }
 .aibadge.bevestigd { background: #2e7d32; } .aibadge.twijfel { background: #ef6c00; } .aibadge.nee { background: #757575; } .aibadge.vondst { background: #7b1fa2; }
+
+.slimrij{display:flex;gap:6px;align-items:center;margin-top:10px;font-weight:600}
+.kand .drie{display:block;font-size:12px;color:#003A5C;margin-top:2px}
