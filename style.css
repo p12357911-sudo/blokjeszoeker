@@ -85,3 +85,5 @@ input[type=text]:focus { outline: none; border-color: #003A5C; }
   main > .intro, main > .zoekknop, main > .voortgang, main > .teller, main > .melding, main > .tijdblok, main > .privacy, main > #resultaat { grid-column: 1 / -1; }
   #loep { width: 260px; height: 260px; }
 }
+
+[hidden] { display: none !important; }
